@@ -23,26 +23,11 @@ mv $TMP_DIR/chromeos $MAGISK_DIR
 mv $TMP_DIR/META-INF/com/google/android/update-binary $MAGISK_DIR
 
 cd $MAGISK_DIR
-#ln -s ./magiskinit magiskpolicy
 chmod 755 *
 sh update-binary -x
 
 # extract magisk
 ./magiskinit -x magisk magisk
-
-if [ -f /vendor/etc/selinux/precompiled_sepolicy ]; then
-  # extract init and patch
-  ./magiskboot --cpio ramdisk.img "extract init init"
-  ./magiskboot --hexpatch init \
-  2F73797374656D2F6574632F73656C696E75782F706C61745F7365706F6C6963792E63696C \
-  2F73797374656D2F6574632F73656C696E75782F706C61745F7365706F6C6963792E585858
-  ./magiskboot --cpio ramdisk.img "rm init" "add 750 init init"
-
-  # add sepolicy
-  #./magiskpolicy --load /vendor/etc/selinux/precompiled_sepolicy --magisk --save sepolicy
-  cp /vendor/etc/selinux/precompiled_sepolicy sepolicy
-  ./magiskboot --cpio ramdisk.img "add 750 sepolicy sepolicy"
-fi
 
 # install magiskinit
 echo "KEEPVERITY=true" >> config
@@ -54,9 +39,6 @@ mv ramdisk.img.gz /data/local/tmp/ramdisk.img
 # clean up
 rm -f config
 rm -f update-binary
-rm -f init
-#rm -f magiskpolicy
-rm -f sepolicy
 
 # move files
 run-as com.topjohnwu.magisk mkdir install
