@@ -38,10 +38,6 @@ KEEPVERITY=false KEEPFORCEENCRYPT=true ./magiskboot cpio ramdisk.img patch
 gzip ramdisk.img
 mv ramdisk.img.gz /data/local/tmp/ramdisk.img
 
-# clean up
-rm -f config
-rm -f update-binary
-
 # move files
 run-as com.topjohnwu.magisk mkdir install
 run-as com.topjohnwu.magisk cp -r $MAGISK_DIR/* ./install
