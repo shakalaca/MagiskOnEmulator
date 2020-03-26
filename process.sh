@@ -30,9 +30,11 @@ sh update-binary -x
 ./magiskinit -x magisk magisk
 
 # install magiskinit
-echo "KEEPVERITY=true" >> config
+echo "KEEPVERITY=false" >> config
 echo "KEEPFORCEENCRYPT=true" >> config
-./magiskboot --cpio ramdisk.img "mkdir 000 .backup" "mv init .backup/init" "add 750 init magiskinit" "add 000 .backup/.magisk config"
+./magiskboot cpio ramdisk.img "mkdir 000 .backup" "mv init .backup/init" 
+./magiskboot cpio ramdisk.img "add 750 init magiskinit" "add 000 .backup/.magisk config"
+KEEPVERITY=false KEEPFORCEENCRYPT=true ./magiskboot cpio ramdisk.img patch
 gzip ramdisk.img
 mv ramdisk.img.gz /data/local/tmp/ramdisk.img
 
