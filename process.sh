@@ -43,8 +43,7 @@ rm -f config
 rm -f update-binary
 
 # move files
-run-as com.topjohnwu.magisk mkdir install
-run-as com.topjohnwu.magisk cp -r $MAGISK_DIR/* ./install
+run-as com.topjohnwu.magisk cp -a $MAGISK_DIR /data/user_de/0/com.topjohnwu.magisk/install
 
 rm -rf $TMP_DIR
 rm -rf $MAGISK_DIR
