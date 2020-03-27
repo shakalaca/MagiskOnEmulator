@@ -26,6 +26,9 @@ cd $MAGISK_DIR
 chmod 755 *
 sh update-binary -x
 
+# do basic checks
+API=`getprop ro.build.version.sdk`
+
 # extract magisk
 ./magiskinit -x magisk magisk
 
@@ -43,7 +46,12 @@ rm -f config
 rm -f update-binary
 
 # move files
-run-as com.topjohnwu.magisk cp -a $MAGISK_DIR /data/user_de/0/com.topjohnwu.magisk/install
+INSTALL_PATH=/data/user_de/0/com.topjohnwu.magisk/install/
+if [[ $API -lt 24 ]]; then
+  INSTALL_PATH=/data/data/com.topjohnwu.magisk/install/
+fi
+run-as com.topjohnwu.magisk mkdir $INSTALL_PATH
+run-as com.topjohnwu.magisk cp -r $MAGISK_DIR/* $INSTALL_PATH
 
 rm -rf $TMP_DIR
 rm -rf $MAGISK_DIR
