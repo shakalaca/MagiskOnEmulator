@@ -32,6 +32,7 @@ if [ "$ABILONG" = "x86_64" ]; then ARCH=x86; IS64BIT=true; fi;
 mv $TMP_DIR/$ARCH/* $MAGISK_DIR
 mv $TMP_DIR/common/* $MAGISK_DIR
 mv $TMP_DIR/chromeos $MAGISK_DIR
+cp ./busybox $MAGISK_DIR
 $IS64BIT && mv -f $MAGISK_DIR/magiskinit64 $MAGISK_DIR/magiskinit || rm -f $MAGISK_DIR/magiskinit64
 
 chmod 755 $MAGISK_DIR/*
