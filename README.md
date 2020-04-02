@@ -12,6 +12,7 @@ Worked on Android API 22 - 29 (except 28)
 
 For Android x86 project on VirtualBox
 
+0. Grab Magisk.zip and put in this directory.
 1. Bring up Android system and establish adb connection.
 2. Execute `prepare_image.sh` or `prepare_image.bat` to grab initrd.img and ramdisk.img on hard drive.[B
 3. Execute `patch.sh` or `patch.bat` to patch initrd.img and ramdisk.img
