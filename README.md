@@ -9,3 +9,11 @@ Worked on Android API 22 - 29 (except 28)
 4. Execute `patch.sh` or `patch.bat` to install Magisk on the ramdisk.img.
 5. When finished copy the patched `ramdisk.img` back to AVD directory.
 6. Restart (cold start) emulator and enjoy Magisk :)
+
+For Android x86 project on VirtualBox
+
+1. Bring up Android system and establish adb connection.
+2. Execute `prepare_image.sh` or `prepare_image.bat` to grab initrd.img and ramdisk.img on hard drive.[B
+3. Execute `patch.sh` or `patch.bat` to patch initrd.img and ramdisk.img
+4. Execute `install_vbox.sh` or `install_vbox.bat` to install patched images on hard drive.
+5. Restart machine and enjoy Magisk :)
