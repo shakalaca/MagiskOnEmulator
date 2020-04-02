@@ -10,7 +10,7 @@ Worked on Android API 22 - 29 (except 28)
 5. When finished copy the patched `ramdisk.img` back to AVD directory.
 6. Restart (cold start) emulator and enjoy Magisk :)
 
-For Android x86 project on VirtualBox
+For Android x86 project on VirtualBox (I'm using 8.1)
 
 0. Grab Magisk.zip and put in this directory.
 1. Bring up Android system and establish adb connection.
