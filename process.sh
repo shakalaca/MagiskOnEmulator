@@ -4,6 +4,7 @@ BASE_DIR=$1
 TMP_DIR=$BASE_DIR/tmp
 MAGISK_DIR=$BASE_DIR/magisk
 RAMDISK=$BASE_DIR/ramdisk.img
+INITRD=$BASE_DIR/initrd.img
 
 mkdir -p $TMP_DIR
 mkdir -p $MAGISK_DIR
@@ -58,6 +59,15 @@ if [[ $API -lt 24 ]]; then
 fi
 run-as com.topjohnwu.magisk mkdir $INSTALL_PATH
 run-as com.topjohnwu.magisk cp -r $MAGISK_DIR/* $INSTALL_PATH
+
+# patch initrd
+if [ -f ${INITRD}.gz ]; then
+  ./busybox gzip -fd ${INITRD}.gz
+  mkdir i; cd i; cat $INITRD | ../busybox cpio -i
+  ../busybox patch -p1 < ../initrd.patch
+  ../busybox find . | ../busybox cpio -H newc -o | ../busybox gzip > $INITRD
+  cd ..; rm -rf i
+fi
 
 # cleanup
 rm -f config
