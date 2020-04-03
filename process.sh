@@ -73,3 +73,9 @@ fi
 rm -f config
 rm -rf $TMP_DIR
 rm -rf $MAGISK_DIR
+rm -f busybox
+rm -f update-binary
+rm -f process.sh
+rm -f magisk.zip
+rm -f initrd.patch
+
