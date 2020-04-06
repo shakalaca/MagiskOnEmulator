@@ -17,7 +17,9 @@ Only test on Android 8.1
 
 0. Grab Magisk.zip and put in this directory.
 1. Bring up Android system and establish adb connection.
-2. Execute `prepare_image.sh` or `prepare_image.bat` to grab initrd.img and ramdisk.img on hard drive.[B
+2. Execute `prepare_image.sh` or `prepare_image.bat` to grab initrd.img and ramdisk.img on hard drive.
 3. Execute `patch.sh` or `patch.bat` to patch initrd.img and ramdisk.img
 4. Execute `install_vbox.sh` or `install_vbox.bat` to install patched images on hard drive.
 5. Restart machine and enjoy Magisk :)
+
+Reference: https://github.com/topjohnwu/Magisk/issues/2551#issuecomment-608998420
