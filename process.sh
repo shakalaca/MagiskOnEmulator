@@ -1,5 +1,8 @@
 #!/system/bin/sh
 
+if [ "$2" == "canary" ]; then
+  USES_CANARY=1
+fi
 BASE_DIR=$1
 TMP_DIR=$BASE_DIR/tmp
 MAGISK_DIR=$BASE_DIR/magisk
@@ -27,6 +30,12 @@ if [ "$ABI" = "x86" ]; then ARCH=x86; fi;
 if [ "$ABI2" = "x86" ]; then ARCH=x86; fi;
 if [ "$ABILONG" = "arm64-v8a" ]; then ARCH=arm; IS64BIT=true; fi;
 if [ "$ABILONG" = "x86_64" ]; then ARCH=x86; IS64BIT=true; fi;
+
+# fetch latest magisk
+if [[ -n $USES_CANARY ]]; then
+  rm -f magisk.zip
+  $BUSYBOX wget -c https://raw.githubusercontent.com/topjohnwu/magisk_files/canary/magisk-debug.zip -O magisk.zip
+fi
   
 # extract files
 $BUSYBOX gzip -fd ${RAMDISK}.gz
