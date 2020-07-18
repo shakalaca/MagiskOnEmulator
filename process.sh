@@ -13,10 +13,12 @@ mkdir -p $MAGISK_DIR
 cd $BASE_DIR
 sh update-binary -x
 
+BUSYBOX=$BASE_DIR/busybox
+
 # platform check
 API=`getprop ro.build.version.sdk`
-ABI=`getprop ro.product.cpu.abi | ./busybox cut -c-3`
-ABI2=`getprop ro.product.cpu.abi2 | ./busybox cut -c-3`
+ABI=`getprop ro.product.cpu.abi | $BUSYBOX cut -c-3`
+ABI2=`getprop ro.product.cpu.abi2 | $BUSYBOX cut -c-3`
 ABILONG=`getprop ro.product.cpu.abi`
 
 ARCH=arm
@@ -27,13 +29,13 @@ if [ "$ABILONG" = "arm64-v8a" ]; then ARCH=arm; IS64BIT=true; fi;
 if [ "$ABILONG" = "x86_64" ]; then ARCH=x86; IS64BIT=true; fi;
   
 # extract files
-./busybox gzip -fd ${RAMDISK}.gz
-./busybox unzip magisk.zip -d $TMP_DIR
+$BUSYBOX gzip -fd ${RAMDISK}.gz
+$BUSYBOX unzip magisk.zip -d $TMP_DIR
 
 mv $TMP_DIR/$ARCH/* $MAGISK_DIR
 mv $TMP_DIR/common/* $MAGISK_DIR
 mv $TMP_DIR/chromeos $MAGISK_DIR
-cp ./busybox $MAGISK_DIR
+cp $BUSYBOX $MAGISK_DIR
 $IS64BIT && mv -f $MAGISK_DIR/magiskinit64 $MAGISK_DIR/magiskinit || rm -f $MAGISK_DIR/magiskinit64
 
 chmod 755 $MAGISK_DIR/*
@@ -45,7 +47,7 @@ echo "KEEPFORCEENCRYPT=true" >> config
 $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 000 .backup" "mv init .backup/init" 
 $MAGISK_DIR/magiskboot cpio $RAMDISK "add 750 init $MAGISK_DIR/magiskinit" "add 000 .backup/.magisk config"
 KEEPVERITY=false KEEPFORCEENCRYPT=true $MAGISK_DIR/magiskboot cpio $RAMDISK patch
-./busybox gzip $RAMDISK
+$BUSYBOX gzip $RAMDISK
 mv ${RAMDISK}.gz $RAMDISK
 
 # install apk
@@ -62,10 +64,10 @@ run-as com.topjohnwu.magisk cp -r $MAGISK_DIR/* $INSTALL_PATH
 
 # patch initrd
 if [ -f ${INITRD}.gz ]; then
-  ./busybox gzip -fd ${INITRD}.gz
-  mkdir i; cd i; cat $INITRD | ../busybox cpio -i
-  ../busybox patch -p1 < ../initrd.patch
-  ../busybox find . | ../busybox cpio -H newc -o | ../busybox gzip > $INITRD
+  $BUSYBOX gzip -fd ${INITRD}.gz
+  mkdir i; cd i; cat $INITRD | $BUSYBOX cpio -i
+  $BUSYBOX patch -p1 < ../initrd.patch
+  $BUSYBOX find . | $BUSYBOX cpio -H newc -o | $BUSYBOX gzip > $INITRD
   cd ..; rm -rf i
 fi
 
