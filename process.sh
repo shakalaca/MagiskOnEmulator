@@ -37,8 +37,46 @@ if [[ -n $USES_CANARY ]]; then
   $BUSYBOX wget -c https://raw.githubusercontent.com/topjohnwu/magisk_files/canary/magisk-debug.zip -O magisk.zip
 fi
   
-# extract files
+# extract and check ramdisk
 $BUSYBOX gzip -fd ${RAMDISK}.gz
+
+if [[ $API -ge 30 ]]; then
+  mkdir -p $TMP_DIR/ramdisk
+  LAST_INDEX=0
+  BS=4096
+
+  RAMDISKS=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep TRAILER\!\!\!`
+  for OFFSET in $RAMDISKS
+  do
+    # skip content
+    if [[ $OFFSET == *"TRAILER"* ]]; then
+      continue
+    fi
+
+    # number of blocks we'll extract
+    BLOCKS=$((OFFSET/BS+1-LAST_INDEX))
+    
+    # plus 1 if the real bytes are too close
+    if [[ $((BLOCKS*BS-OFFSET)) < $((BS/2)) ]]; then
+      BLOCKS=$((BLOCKS+1))
+    fi
+    
+    # extract and dump
+    dd if=$RAMDISK skip=$LAST_INDEX count=$BLOCKS bs=$BS of=$TMP_DIR/temp.img
+    cd $TMP_DIR/ramdisk
+      cat $TMP_DIR/temp.img | $BASE_DIR/busybox cpio -i
+    cd -
+    LAST_INDEX=$BLOCKS   
+  done
+
+  cd $TMP_DIR/ramdisk
+    $BUSYBOX find . | $BUSYBOX cpio -H newc -o > $RAMDISK
+  cd -
+
+  rm $TMP_DIR/temp.img
+fi
+
+# extract files
 $BUSYBOX unzip magisk.zip -d $TMP_DIR
 
 mv $TMP_DIR/$ARCH/* $MAGISK_DIR
@@ -54,6 +92,10 @@ $MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
 echo "KEEPVERITY=false" >> config
 echo "KEEPFORCEENCRYPT=true" >> config
 $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 000 .backup" "mv init .backup/init" 
+# should be temporary hack
+if [[ $API -ge 30 ]]; then
+  $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 755 apex"
+fi
 $MAGISK_DIR/magiskboot cpio $RAMDISK "add 750 init $MAGISK_DIR/magiskinit" "add 000 .backup/.magisk config"
 KEEPVERITY=false KEEPFORCEENCRYPT=true $MAGISK_DIR/magiskboot cpio $RAMDISK patch
 $BUSYBOX gzip $RAMDISK
