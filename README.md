@@ -7,12 +7,11 @@ Works on Android API 22 - 29 (except 28)
 2. Make sure you backup the untouched `ramdisk.img` from `<sdk_home>/system-images/<platform>/*/ramdisk.img`. You will need it everytime you want to patch ramdisk with magisk (for the first time and also for subsequent magisk updates).
 3. Clone this repository and copy the original `ramdisk.img` into the clone's folder.
 4. Start the newly created AVD.
-5. Execute `patch.sh` or `patch.bat` to install Magisk on the ramdisk.img.
-6. Optionally: execute `patch.sh canary` or `patch.bat canary` to install latest canary Magisk on the ramdisk.img.
-7. When finished, copy the patched `ramdisk.img` back to AVD directory.
-8. Restart (cold start) emulator
-9. Optionally: update magisk manager
-10. Enjoy Magisk :)
+5. Execute `patch.sh` or `patch.bat` to install Magisk on the ramdisk.img (you can execute `patch.sh canary` or `patch.bat canary` to install latest canary Magisk on the ramdisk.img)
+6. When finished, copy the patched `ramdisk.img` back to AVD directory.
+7. Restart (cold start) emulator
+8. Recommended: update magisk manager
+9. Enjoy Magisk :)
 
 Install Magisk On Android x86 Project on VirtualBox
 ===================================================
