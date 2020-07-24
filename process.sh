@@ -13,12 +13,14 @@ mkdir -p $TMP_DIR
 mkdir -p $MAGISK_DIR
 
 # prepare busybox
+echo "[*] Extracting busybox .."
 cd $BASE_DIR
-sh update-binary -x
+sh update-binary -x > /dev/null 2>&1
 
 BUSYBOX=$BASE_DIR/busybox
 
 # platform check
+echo "[*] Checking Android version"
 API=`getprop ro.build.version.sdk`
 ABI=`getprop ro.product.cpu.abi | $BUSYBOX cut -c-3`
 ABI2=`getprop ro.product.cpu.abi2 | $BUSYBOX cut -c-3`
@@ -33,6 +35,7 @@ if [ "$ABILONG" = "x86_64" ]; then ARCH=x86; IS64BIT=true; fi;
 
 # fetch latest magisk
 if [[ -n $USES_CANARY ]]; then
+  echo "[*] Fetching canary version of Magisk .."
   rm -f magisk.zip
   $BUSYBOX wget -c https://raw.githubusercontent.com/topjohnwu/magisk_files/canary/magisk-debug.zip -O magisk.zip
 fi
@@ -41,13 +44,17 @@ fi
 $BUSYBOX gzip -fd ${RAMDISK}.gz
 
 if [[ $API -ge 30 ]]; then
+  echo "[-] API level greater then 30"
+  echo "[*] Check if we need to repack ramdisk before patching .."
   COUNT=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep 00TRAILER\!\!\! | $BUSYBOX wc -l`  
   if [ $COUNT -gt 1 ]; then
+    echo "[-] Multiple cpio archives detected"
     REPACK_RAMDISK=1
   fi
 fi
   
 if [[ -n $REPACK_RAMDISK ]]; then
+  echo "[*] Repacking ramdisk .."
   mkdir -p $TMP_DIR/ramdisk
   LAST_INDEX=0
   BS=4096
@@ -69,22 +76,23 @@ if [[ -n $REPACK_RAMDISK ]]; then
     fi
     
     # extract and dump
-    dd if=$RAMDISK skip=$LAST_INDEX count=$BLOCKS bs=$BS of=$TMP_DIR/temp.img
-    cd $TMP_DIR/ramdisk
-      cat $TMP_DIR/temp.img | $BASE_DIR/busybox cpio -i
-    cd -
+    dd if=$RAMDISK skip=$LAST_INDEX count=$BLOCKS bs=$BS of=$TMP_DIR/temp.img > /dev/null 2>&1
+    cd $TMP_DIR/ramdisk > /dev/null
+      cat $TMP_DIR/temp.img | $BASE_DIR/busybox cpio -i > /dev/null 2>&1
+    cd - > /dev/null
     LAST_INDEX=$BLOCKS   
   done
 
-  cd $TMP_DIR/ramdisk
+  cd $TMP_DIR/ramdisk > /dev/null
     $BUSYBOX find . | $BUSYBOX cpio -H newc -o > $RAMDISK
-  cd -
+  cd - > /dev/null
 
   rm $TMP_DIR/temp.img
 fi
 
 # extract files
-$BUSYBOX unzip magisk.zip -d $TMP_DIR
+echo "[*] Unzipping Magisk .."
+$BUSYBOX unzip magisk.zip -d $TMP_DIR > /dev/null
 
 mv $TMP_DIR/$ARCH/* $MAGISK_DIR
 mv $TMP_DIR/common/* $MAGISK_DIR
@@ -114,6 +122,8 @@ case $((STATUS & 3)) in
 esac
 
 # patch ramdisk
+echo "[*] Patching ramdisk .."
+echo " "
 echo "KEEPVERITY=false" >> config
 echo "KEEPFORCEENCRYPT=true" >> config
 $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 000 .backup" "mv init .backup/init" 
@@ -123,19 +133,23 @@ if [[ $API -ge 30 ]]; then
 fi
 $MAGISK_DIR/magiskboot cpio $RAMDISK "add 750 init $MAGISK_DIR/magiskinit" "add 000 .backup/.magisk config"
 KEEPVERITY=false KEEPFORCEENCRYPT=true $MAGISK_DIR/magiskboot cpio $RAMDISK patch
+
+echo "[*] Done patching, compressing ramdisk .."
 $BUSYBOX gzip $RAMDISK
 mv ${RAMDISK}.gz $RAMDISK
 
 # install apk
-pm install -r $MAGISK_DIR/magisk.apk
+echo "[*] Installing MagiskManager .."
+pm install -r $MAGISK_DIR/magisk.apk > /dev/null
 rm -f $MAGISK_DIR/magisk.apk
 
 # move files
+echo "[*] Installing su binaries .."
 INSTALL_PATH=/data/user_de/0/com.topjohnwu.magisk/install/
 if [[ $API -lt 24 ]]; then
   INSTALL_PATH=/data/data/com.topjohnwu.magisk/install/
 fi
-run-as com.topjohnwu.magisk mkdir $INSTALL_PATH
+run-as com.topjohnwu.magisk mkdir $INSTALL_PATH > /dev/null 2>&1
 run-as com.topjohnwu.magisk cp -r $MAGISK_DIR/* $INSTALL_PATH
 
 # patch initrd
@@ -148,6 +162,7 @@ if [ -f ${INITRD}.gz ]; then
 fi
 
 # cleanup
+echo "[*] Clean up"
 rm -f config
 rm -rf $TMP_DIR
 rm -rf $MAGISK_DIR
