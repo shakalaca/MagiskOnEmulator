@@ -41,11 +41,18 @@ fi
 $BUSYBOX gzip -fd ${RAMDISK}.gz
 
 if [[ $API -ge 30 ]]; then
+  COUNT=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep 00TRAILER\!\!\! | $BUSYBOX wc -l`  
+  if [ $COUNT -gt 1 ]; then
+    REPACK_RAMDISK=1
+  fi
+fi
+  
+if [[ -n $REPACK_RAMDISK ]]; then
   mkdir -p $TMP_DIR/ramdisk
   LAST_INDEX=0
   BS=4096
 
-  RAMDISKS=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep TRAILER\!\!\!`
+  RAMDISKS=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep 00TRAILER\!\!\!`
   for OFFSET in $RAMDISKS
   do
     # skip content
@@ -87,6 +94,24 @@ $IS64BIT && mv -f $MAGISK_DIR/magiskinit64 $MAGISK_DIR/magiskinit || rm -f $MAGI
 
 chmod 755 $MAGISK_DIR/*
 $MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
+
+# check ramdisk status
+echo "[*] Checking ramdisk status .."
+$MAGISK_DIR/magiskboot cpio $RAMDISK test > /dev/null 2>&1
+STATUS=$?
+case $((STATUS & 3)) in
+  0 )  # Stock boot
+    echo "[-] Stock boot image detected"
+    ;;
+  1 )  # Magisk patched
+    echo "[-] Magisk patched boot image detected"
+    $MAGISK_DIR/magiskboot cpio $RAMDISK restore > /dev/null 2>&1
+    ;;
+  2 )  # Unsupported
+    echo "[-] Boot image patched by unsupported programs"
+    abort "! Please use stock ramdisk.img"
+    ;;
+esac
 
 # patch ramdisk
 echo "KEEPVERITY=false" >> config
