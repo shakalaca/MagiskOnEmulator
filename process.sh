@@ -54,35 +54,43 @@ if [[ $API -ge 30 ]]; then
 fi
   
 if [[ -n $REPACK_RAMDISK ]]; then
-  echo "[*] Repacking ramdisk .."
+  echo "[*] Unpacking ramdisk .."
   mkdir -p $TMP_DIR/ramdisk
   LAST_INDEX=0
-  BS=4096
+  IBS=1
+  OBS=4096
 
   RAMDISKS=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep 00TRAILER\!\!\!`
   for OFFSET in $RAMDISKS
   do
-    # skip content
+    # calculate offset to next archive
     if [[ $OFFSET == *"TRAILER"* ]]; then
+      # find position of end of TRAILER!!! string in image
+      LEN=${#OFFSET}
+      START=$((LAST_INDEX+LEN))
+
+      # find first occurance of string in image, that will be start of cpio archive
+      dd if=$RAMDISK skip=$START count=$OBS ibs=$IBS obs=$OBS of=$TMP_DIR/temp.img > /dev/null 2>&1
+      HEAD=(`$BUSYBOX strings -t d $TMP_DIR/temp.img | $BUSYBOX head -1`)
+      
+      # wola
+      LAST_INDEX=$((START+HEAD[0]))
       continue
     fi
 
     # number of blocks we'll extract
-    BLOCKS=$((OFFSET/BS+1-LAST_INDEX))
-    
-    # plus 1 if the real bytes are too close
-    if [[ $((BLOCKS*BS-OFFSET)) < $((BS/2)) ]]; then
-      BLOCKS=$((BLOCKS+1))
-    fi
+    BLOCKS=$(((OFFSET+128)/IBS))
     
     # extract and dump
-    dd if=$RAMDISK skip=$LAST_INDEX count=$BLOCKS bs=$BS of=$TMP_DIR/temp.img > /dev/null 2>&1
+    echo "[-] Dumping from $LAST_INDEX to $BLOCKS .."
+    dd if=$RAMDISK skip=$LAST_INDEX count=$BLOCKS ibs=$IBS obs=$OBS of=$TMP_DIR/temp.img > /dev/null 2>&1
     cd $TMP_DIR/ramdisk > /dev/null
       cat $TMP_DIR/temp.img | $BASE_DIR/busybox cpio -i > /dev/null 2>&1
     cd - > /dev/null
-    LAST_INDEX=$BLOCKS   
+    LAST_INDEX=$OFFSET
   done
 
+  echo "[*] Repacking ramdisk .."
   cd $TMP_DIR/ramdisk > /dev/null
     $BUSYBOX find . | $BUSYBOX cpio -H newc -o > $RAMDISK
   cd - > /dev/null
