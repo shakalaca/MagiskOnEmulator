@@ -92,7 +92,7 @@ fi
 
 # extract files
 echo "[*] Unzipping Magisk .."
-$BUSYBOX unzip magisk.zip -d $TMP_DIR > /dev/null
+$BUSYBOX unzip magisk.zip -od $TMP_DIR > /dev/null
 
 mv $TMP_DIR/$ARCH/* $MAGISK_DIR
 mv $TMP_DIR/common/* $MAGISK_DIR
