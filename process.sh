@@ -37,7 +37,7 @@ if [ "$ABILONG" = "x86_64" ]; then ARCH=x86; IS64BIT=true; fi;
 if [[ -n $USES_CANARY ]]; then
   echo "[*] Fetching canary version of Magisk .."
   rm -f magisk.zip
-  while [ $STATUS != 0 ]
+  while [[ $STATUS != 0 ]]
   do
     $BUSYBOX wget -c https://raw.githubusercontent.com/topjohnwu/magisk_files/canary/magisk-debug.zip -O magisk.zip
     STATUS=$?
