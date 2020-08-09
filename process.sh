@@ -37,7 +37,18 @@ if [ "$ABILONG" = "x86_64" ]; then ARCH=x86; IS64BIT=true; fi;
 if [[ -n $USES_CANARY ]]; then
   echo "[*] Fetching canary version of Magisk .."
   rm -f magisk.zip
-  $BUSYBOX wget -c https://raw.githubusercontent.com/topjohnwu/magisk_files/canary/magisk-debug.zip -O magisk.zip
+  while [ $STATUS != 0 ]
+  do
+    $BUSYBOX wget -c https://raw.githubusercontent.com/topjohnwu/magisk_files/canary/magisk-debug.zip -O magisk.zip
+    STATUS=$?
+    if [[ $STATUS == 1 && -f magisk.zip ]] ; then
+      F_SIZE=$(stat -c %s magisk.zip)
+      BLOCK=$((F_SIZE/4096-2))
+      echo "[*] Failed to get full magisk.zip, retry .. (" $BLOCK ")"
+      dd if=magisk.zip of=magisk.zip.new bs=4096 count=$BLOCK > /dev/null 2>&1
+      mv -f magisk.zip.new magisk.zip
+    fi
+  done  
 fi
   
 # extract and check ramdisk
