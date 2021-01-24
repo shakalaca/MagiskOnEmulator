@@ -39,7 +39,7 @@ if [[ -n $USES_CANARY ]]; then
   rm -f magisk.zip
   while [[ $STATUS != 0 ]]
   do
-    $BUSYBOX wget -c https://raw.githubusercontent.com/topjohnwu/magisk_files/canary/magisk-debug.zip -O magisk.zip
+    $BUSYBOX wget -c https://github.com/topjohnwu/magisk_files/blob/canary/app-debug.apk -O magisk.zip
     STATUS=$?
     if [[ $STATUS == 1 && -f magisk.zip ]] ; then
       F_SIZE=$(stat -c %s magisk.zip)
