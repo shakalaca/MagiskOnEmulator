@@ -26,12 +26,12 @@ ABI=`getprop ro.product.cpu.abi | $BUSYBOX cut -c-3`
 ABI2=`getprop ro.product.cpu.abi2 | $BUSYBOX cut -c-3`
 ABILONG=`getprop ro.product.cpu.abi`
 
-ARCH=arm
+ARCH32=arm
 IS64BIT=false
-if [ "$ABI" = "x86" ]; then ARCH=x86; fi;
-if [ "$ABI2" = "x86" ]; then ARCH=x86; fi;
-if [ "$ABILONG" = "arm64-v8a" ]; then ARCH=arm; IS64BIT=true; fi;
-if [ "$ABILONG" = "x86_64" ]; then ARCH=x86; IS64BIT=true; fi;
+if [ "$ABI" = "x86" ]; then ARCH32=x86; fi;
+if [ "$ABI2" = "x86" ]; then ARCH32=x86; fi;
+if [ "$ABILONG" = "arm64-v8a" ]; then ARCH32=arm; IS64BIT=true; fi;
+if [ "$ABILONG" = "x86_64" ]; then ARCH32=x86; IS64BIT=true; fi;
 
 # fetch latest magisk
 if [[ -n $USES_CANARY ]]; then
@@ -113,14 +113,28 @@ fi
 echo "[*] Unzipping Magisk .."
 $BUSYBOX unzip magisk.zip -od $TMP_DIR > /dev/null
 
-mv $TMP_DIR/$ARCH/* $MAGISK_DIR
-mv $TMP_DIR/common/* $MAGISK_DIR
-mv $TMP_DIR/chromeos $MAGISK_DIR
-cp $BUSYBOX $MAGISK_DIR
-$IS64BIT && mv -f $MAGISK_DIR/magiskinit64 $MAGISK_DIR/magiskinit || rm -f $MAGISK_DIR/magiskinit64
+COMMON=/common
+if $BUSYBOX unzip -l magisk.zip | grep -qF classes.dex; then
+  [ "$ARCH32" = "arm" ] && ARCH32=armeabi-v7a
+  BINDIR=/lib
+  cd ${TMP_DIR}${BINDIR}/$ARCH32
+  for libfile in lib*.so; do
+    file=${libfile#lib}; file=${file%.so}
+    mv "$libfile" "$file"
+  done
+  cd $TMP_DIR
+  COMMON=/assets
+fi
+
+mv ${TMP_DIR}${BINDIR}/$ARCH32/* $MAGISK_DIR
+mv ${TMP_DIR}${COMMON}/* $MAGISK_DIR
+[ ! -d $MAGISK_DIR/chromeos ] && mv $TMP_DIR/chromeos $MAGISK_DIR
+[ ! -f $MAGISK_DIR/busybox ] && cp $BUSYBOX $MAGISK_DIR
+$IS64BIT && [ -f $MAGISK_DIR/magiskinit64 ] && mv -f $MAGISK_DIR/magiskinit64 $MAGISK_DIR/magiskinit
+rm -f $MAGISK_DIR/magiskinit64
 
 chmod 755 $MAGISK_DIR/*
-$MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
+[ ! -f $MAGISK_DIR/magisk64 ] && $MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
 
 # check ramdisk status
 echo "[*] Checking ramdisk status .."
@@ -187,7 +201,6 @@ rm -rf $TMP_DIR
 rm -rf $MAGISK_DIR
 rm -f busybox
 rm -f update-binary
-rm -f process.sh
 rm -f magisk.zip
 rm -f initrd.patch
-
+rm -f process.sh
