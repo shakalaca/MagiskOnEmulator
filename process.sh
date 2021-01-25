@@ -117,7 +117,7 @@ COMMON=/common
 if [[ -f $TMP_DIR/classes.dex ]]; then
   echo "[*] New Magisk packaging format detected .."
   [ "$ARCH" = "arm" ] && ARCH=armeabi-v7a
-  APK=1
+  USES_ZIP_IN_APK=1
   BINDIR=/lib
   COMMON=/assets
   cd ${TMP_DIR}${BINDIR}/$ARCH
@@ -162,6 +162,15 @@ echo " "
 echo "KEEPVERITY=false" >> config
 echo "KEEPFORCEENCRYPT=true" >> config
 $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 000 .backup" "mv init .backup/init" 
+if [[ -n $USES_ZIP_IN_APK ]]; then
+  $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk32 $MAGISK_DIR/magisk32.xz
+  $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk64 $MAGISK_DIR/magisk64.xz
+  $IS64BIT && SKIP64="" || SKIP64="#"
+  $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 0750 overlay.d" "mkdir 0750 overlay.d/sbin" \
+  "add 0644 overlay.d/sbin/magisk32.xz $MAGISK_DIR/magisk32.xz" \
+  "$SKIP64 add 0644 overlay.d/sbin/magisk64.xz $MAGISK_DIR/magisk64.xz"
+fi
+
 # should be temporary hack
 if [[ $API -ge 30 ]]; then
   $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 755 apex"
@@ -175,7 +184,7 @@ mv ${RAMDISK}.gz $RAMDISK
 
 # install apk
 echo "[*] Installing MagiskManager .."
-if [ "$APK" = 1 ]; then
+if [[ -n $USES_ZIP_IN_APK ]]; then
   pm install -r magisk.zip > /dev/null
 else
   pm install -r $MAGISK_DIR/magisk.apk > /dev/null
