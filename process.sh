@@ -136,7 +136,11 @@ $IS64BIT && [ -f $MAGISK_DIR/magiskinit64 ] && mv -f $MAGISK_DIR/magiskinit64 $M
 rm -f $MAGISK_DIR/magiskinit64
 
 chmod 755 $MAGISK_DIR/*
-[ ! -f $MAGISK_DIR/magisk64 ] && $MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
+if [[ -n $USES_ZIP_IN_APK ]]; then
+  mv magisk.zip $MAGISK_DIR/magisk.apk
+else
+  $MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
+fi
 
 # check ramdisk status
 echo "[*] Checking ramdisk status .."
@@ -184,11 +188,7 @@ mv ${RAMDISK}.gz $RAMDISK
 
 # install apk
 echo "[*] Installing MagiskManager .."
-if [[ -n $USES_ZIP_IN_APK ]]; then
-  pm install -r magisk.zip > /dev/null
-else
-  pm install -r $MAGISK_DIR/magisk.apk > /dev/null
-fi
+pm install -r $MAGISK_DIR/magisk.apk > /dev/null
 rm -f $MAGISK_DIR/magisk.apk
 
 # move files
