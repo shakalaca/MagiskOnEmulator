@@ -116,14 +116,15 @@ $BUSYBOX unzip magisk.zip -od $TMP_DIR > /dev/null
 COMMON=/common
 if $BUSYBOX unzip -l magisk.zip | grep -qF classes.dex; then
   [ "$ARCH32" = "arm" ] && ARCH32=armeabi-v7a
+  APK=1
   BINDIR=/lib
+  COMMON=/assets
   cd ${TMP_DIR}${BINDIR}/$ARCH32
   for libfile in lib*.so; do
-    file=${libfile#lib}; file=${file%.so}
+    file="${libfile#lib}"; file="${file%.so}"
     mv "$libfile" "$file"
   done
   cd $TMP_DIR
-  COMMON=/assets
 fi
 
 mv ${TMP_DIR}${BINDIR}/$ARCH32/* $MAGISK_DIR
@@ -173,7 +174,11 @@ mv ${RAMDISK}.gz $RAMDISK
 
 # install apk
 echo "[*] Installing MagiskManager .."
-pm install -r $MAGISK_DIR/magisk.apk > /dev/null
+if [ "$APK" = 1 ]; then
+  pm install -r magisk.zip > /dev/null
+else
+  pm install -r $MAGISK_DIR/magisk.apk > /dev/null
+fi
 rm -f $MAGISK_DIR/magisk.apk
 
 # move files
