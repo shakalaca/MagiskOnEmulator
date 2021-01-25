@@ -124,12 +124,12 @@ if $BUSYBOX unzip -l magisk.zip | grep -qF classes.dex; then
     file="${libfile#lib}"; file="${file%.so}"
     mv "$libfile" "$file"
   done
-  cd $TMP_DIR
+  cd - > /dev/null
 fi
 
 mv ${TMP_DIR}${BINDIR}/$ARCH/* $MAGISK_DIR
 mv ${TMP_DIR}${COMMON}/* $MAGISK_DIR
-[ ! -d $MAGISK_DIR/chromeos ] && mv $TMP_DIR/chromeos $MAGISK_DIR
+[ -d $TMP_DIR/chromeos ] && mv $TMP_DIR/chromeos $MAGISK_DIR
 [ ! -f $MAGISK_DIR/busybox ] && cp $BUSYBOX $MAGISK_DIR
 $IS64BIT && [ -f $MAGISK_DIR/magiskinit64 ] && mv -f $MAGISK_DIR/magiskinit64 $MAGISK_DIR/magiskinit
 rm -f $MAGISK_DIR/magiskinit64
@@ -206,6 +206,7 @@ rm -rf $TMP_DIR
 rm -rf $MAGISK_DIR
 rm -f busybox
 rm -f update-binary
+rm -f process.sh
 rm -f magisk.zip
 rm -f initrd.patch
-rm -f process.sh
+
