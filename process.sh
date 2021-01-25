@@ -132,13 +132,12 @@ mv ${TMP_DIR}${BINDIR}/$ARCH/* $MAGISK_DIR
 mv ${TMP_DIR}${COMMON}/* $MAGISK_DIR
 [ -d $TMP_DIR/chromeos ] && mv $TMP_DIR/chromeos $MAGISK_DIR
 [ ! -f $MAGISK_DIR/busybox ] && cp $BUSYBOX $MAGISK_DIR
-$IS64BIT && [ -f $MAGISK_DIR/magiskinit64 ] && mv -f $MAGISK_DIR/magiskinit64 $MAGISK_DIR/magiskinit
-rm -f $MAGISK_DIR/magiskinit64
 
 chmod 755 $MAGISK_DIR/*
 if [[ -n $USES_ZIP_IN_APK ]]; then
   mv magisk.zip $MAGISK_DIR/magisk.apk
 else
+  $IS64BIT && mv -f $MAGISK_DIR/magiskinit64 $MAGISK_DIR/magiskinit || rm -f $MAGISK_DIR/magiskinit64
   $MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
 fi
 
