@@ -114,7 +114,8 @@ echo "[*] Unzipping Magisk .."
 $BUSYBOX unzip magisk.zip -od $TMP_DIR > /dev/null
 
 COMMON=/common
-if $BUSYBOX unzip -l magisk.zip | grep -qF classes.dex; then
+if [[ -f $TMP_DIR/classes.dex ]]; then
+  echo "[*] New Magisk packaging format detected .."
   [ "$ARCH" = "arm" ] && ARCH=armeabi-v7a
   APK=1
   BINDIR=/lib
