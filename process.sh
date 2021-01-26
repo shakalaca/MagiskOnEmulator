@@ -166,22 +166,33 @@ echo "[*] Patching ramdisk .."
 echo " "
 echo "KEEPVERITY=false" >> config
 echo "KEEPFORCEENCRYPT=true" >> config
-$MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 000 .backup" "mv init .backup/init" 
 if [[ -n $USES_ZIP_IN_APK ]]; then
   $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk32 $MAGISK_DIR/magisk32.xz
   $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk64 $MAGISK_DIR/magisk64.xz
   $IS64BIT && SKIP64="" || SKIP64="#"
-  $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 0750 overlay.d" "mkdir 0750 overlay.d/sbin" \
-  "add 0644 overlay.d/sbin/magisk32.xz $MAGISK_DIR/magisk32.xz" \
-  "$SKIP64 add 0644 overlay.d/sbin/magisk64.xz $MAGISK_DIR/magisk64.xz"
+  KEEPVERITY=false KEEPFORCEENCRYPT=true $MAGISK_DIR/magiskboot cpio $RAMDISK \
+    "add 750 init $MAGISK_DIR/magiskinit" \
+    "mkdir 0750 overlay.d" \
+    "mkdir 0750 overlay.d/sbin" \
+    "add 0644 overlay.d/sbin/magisk32.xz $MAGISK_DIR/magisk32.xz" \
+    "$SKIP64 add 0644 overlay.d/sbin/magisk64.xz $MAGISK_DIR/magisk64.xz" \
+    "patch" \
+    "backup $RAMDISK.orig" \
+    "mkdir 000 .backup" \
+    "add 000 .backup/.magisk config"
+else
+  KEEPVERITY=false KEEPFORCEENCRYPT=true $MAGISK_DIR/magiskboot cpio $RAMDISK \
+    "add 750 init $MAGISK_DIR/magiskinit" \
+    "patch" \
+    "backup ${RAMDISK}.orig" \
+    "mkdir 000 .backup" \
+    "add 000 .backup/.magisk config"
 fi
 
 # should be temporary hack
 if [[ $API -ge 30 ]]; then
   $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 755 apex"
 fi
-$MAGISK_DIR/magiskboot cpio $RAMDISK "add 750 init $MAGISK_DIR/magiskinit" "add 000 .backup/.magisk config"
-KEEPVERITY=false KEEPFORCEENCRYPT=true $MAGISK_DIR/magiskboot cpio $RAMDISK patch
 
 echo "[*] Done patching, compressing ramdisk .."
 $BUSYBOX gzip $RAMDISK
