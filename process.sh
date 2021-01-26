@@ -190,9 +190,9 @@ else
 fi
 
 # should be temporary hack
-if [[ $API -ge 30 ]]; then
-  $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 755 apex"
-fi
+#if [[ $API -ge 30 ]]; then
+#  $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 755 apex"
+#fi
 
 echo "[*] Done patching, compressing ramdisk .."
 $BUSYBOX gzip $RAMDISK
