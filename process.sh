@@ -148,10 +148,12 @@ STATUS=$?
 case $((STATUS & 3)) in
   0 )  # Stock boot
     echo "[-] Stock boot image detected"
+    cp -af $RAMDISK ${RAMDISK}.orig
     ;;
   1 )  # Magisk patched
     echo "[-] Magisk patched boot image detected"
     $MAGISK_DIR/magiskboot cpio $RAMDISK restore > /dev/null 2>&1
+    cp -af $RAMDISK ${RAMDISK}.orig
     ;;
   2 )  # Unsupported
     echo "[-] Boot image patched by unsupported programs"
