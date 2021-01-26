@@ -3,6 +3,16 @@
 if [ "$2" == "canary" ]; then
   USES_CANARY=1
 fi
+if [ "$2" == "manager" ]; then
+  USES_MANAGER=1
+fi
+if [ "$2" == "canary_manager" ]; then
+  USES_CANARY=1
+  USES_MANAGER=1
+fi
+if [ "$2" == "pull" ]; then
+  EXTRACT_RAMDISK=1
+fi
 BASE_DIR=$1
 TMP_DIR=$BASE_DIR/tmp
 MAGISK_DIR=$BASE_DIR/magisk
@@ -32,6 +42,22 @@ if [ "$ABI" = "x86" ]; then ARCH=x86; fi;
 if [ "$ABI2" = "x86" ]; then ARCH=x86; fi;
 if [ "$ABILONG" = "arm64-v8a" ]; then ARCH=arm; IS64BIT=true; fi;
 if [ "$ABILONG" = "x86_64" ]; then ARCH=x86; IS64BIT=true; fi;
+
+if [[ -n $EXTRACT_RAMDISK ]]; then
+
+echo "[*] Moving out patched boot.img .."
+mv /sdcard/Download/magisk_patched*.img $TMP_DIR/boot.img
+
+if [ -f $TMP_DIR/boot.img ]; then
+  echo "[*] Extracting ramdisk .."
+  dd if=$TMP_DIR/boot.img of=$RAMDISK bs=2048 skip=1
+  $BUSYBOX gzip $RAMDISK
+  mv ${RAMDISK}.gz $RAMDISK
+else
+  echo "[!] boot.img not found. "
+fi
+
+else 
 
 # fetch latest magisk
 if [[ -n $USES_CANARY ]]; then
@@ -141,6 +167,35 @@ else
   $MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
 fi
 
+writehex() {
+  printf "\x${1:6:2}\x${1:4:2}\x${1:2:2}\x${1:0:2}"
+}
+
+if [[ -n $USES_MANAGER ]]; then
+
+echo "[*] Build fake boot.img .."
+
+BOOT_IMG=/sdcard/boot.img
+RAMDISK_SIZE="$(printf '%08x' $(stat -c%s $RAMDISK))"
+
+rm -f $BOOT_IMG
+
+printf "\x41\x4E\x44\x52\x4F\x49\x44\x21\x00\x00\x00\x00\x00\x80\x00\x10" >> $BOOT_IMG
+writehex $RAMDISK_SIZE >> $BOOT_IMG
+printf "\x00\x00\x00\x11\x00\x00\x00\x00\x00\x00\xF0\x10\x00\x01\x00\x10\x00\x08\x00\x00" >> $BOOT_IMG
+i=0
+while [[ $i -lt 251 ]];
+do
+  printf "\x00\x00\x00\x00\x00\x00\x00\x00" >> $BOOT_IMG
+  i=$(($i+1))
+done
+
+cat $RAMDISK >> $BOOT_IMG
+
+echo "[*] boot.img is ready, launch MagiskManager and patch it."
+
+else
+
 # check ramdisk status
 echo "[*] Checking ramdisk status .."
 $MAGISK_DIR/magiskboot cpio $RAMDISK test > /dev/null 2>&1
@@ -195,6 +250,9 @@ fi
 #fi
 
 echo "[*] Done patching, compressing ramdisk .."
+
+fi # USES_MANAGER
+
 $BUSYBOX gzip $RAMDISK
 mv ${RAMDISK}.gz $RAMDISK
 
@@ -202,6 +260,8 @@ mv ${RAMDISK}.gz $RAMDISK
 echo "[*] Installing MagiskManager .."
 pm install -r $MAGISK_DIR/magisk.apk > /dev/null
 rm -f $MAGISK_DIR/magisk.apk
+
+if [[ ! -n USES_MANAGER ]]; then
 
 # move files
 echo "[*] Installing su binaries .."
@@ -212,6 +272,8 @@ fi
 run-as com.topjohnwu.magisk mkdir $INSTALL_PATH > /dev/null 2>&1
 run-as com.topjohnwu.magisk cp -r $MAGISK_DIR/* $INSTALL_PATH
 
+fi # USES_MANAGER
+
 # patch initrd
 if [ -f ${INITRD}.gz ]; then
   $BUSYBOX gzip -fd ${INITRD}.gz
@@ -220,6 +282,8 @@ if [ -f ${INITRD}.gz ]; then
   $BUSYBOX find . | $BUSYBOX cpio -H newc -o | $BUSYBOX gzip > $INITRD
   cd ..; rm -rf i
 fi
+
+fi # EXTRACT_RAMDISK
 
 # cleanup
 echo "[*] Clean up"
