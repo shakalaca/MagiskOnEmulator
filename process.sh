@@ -50,6 +50,7 @@ mv /sdcard/Download/magisk_patched*.img $TMP_DIR/boot.img
 
 if [ -f $TMP_DIR/boot.img ]; then
   echo "[*] Extracting ramdisk .."
+  rm -f ${RAMDISK}.gz
   dd if=$TMP_DIR/boot.img of=$RAMDISK bs=2048 skip=1
   $BUSYBOX gzip $RAMDISK
   mv ${RAMDISK}.gz $RAMDISK
