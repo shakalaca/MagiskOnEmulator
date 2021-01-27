@@ -7,11 +7,13 @@ Works on Android API 22 - 30 (except 28)
 2. Make sure you backup the untouched `ramdisk.img` from `<sdk_home>/system-images/<platform>/*/ramdisk.img`. You will need it everytime you want to patch ramdisk with magisk (for the first time and also for subsequent magisk updates).
 3. Clone this repository and copy the original `ramdisk.img` into the clone's folder.
 4. Start the newly created AVD.
-5a. Execute `patch.sh` or `patch.bat` to install Magisk (pre-downloaded) on the ramdisk.img 
-5b. Alternatively, you can execute `patch.sh canary` or `patch.bat canary` to install latest canary Magisk on the ramdisk.img. This requires AVD internet connectivity towards github.
-***Note: If choosing to use 'patch.sh', you might need to run `dos2unix patch.sh` first so that the script has propper line ending. This is needed when using for example github for desktop, which changes line ending to CRLF instead of LF
-5c. If you prefer patching by MagiskManager, execute `patch.sh manager` or `patch.bat manager`, it will create a fake `boot.img` on internal storage. We then launch MagiskManager and click `Install` and select `boot.img` to patch it. When finished,
+5. There are three ways to patch ramdisk:
+  * Execute `patch.sh` or `patch.bat` to install Magisk (pre-downloaded) on the ramdisk.img 
+  * Alternatively, you can execute `patch.sh canary` or `patch.bat canary` to install latest canary Magisk on the ramdisk.img. This requires AVD internet connectivity towards github.
+***Note: If choosing to use 'patch.sh', you might need to run `dos2unix patch.sh` first so that the script has propper line ending. This is needed when using for example github for desktop, which changes line ending to CRLF instead of LF***
+  * If you prefer patching by MagiskManager, execute `patch.sh manager` or `patch.bat manager`, it will create a fake `boot.img` on internal storage. We then launch MagiskManager and click `Install` and select `boot.img` to patch it. When finished,
 execute `patch.sh pull` or `patch.bat pull` to get the patched ramdisk.img. This method is mainly for Released version of Magisk.
+
 6. When finished, copy the patched `ramdisk.img` back to AVD directory.
 7. Power off and restart (cold start) the emulator
 8. Recommended: update magisk manager
