@@ -13,6 +13,7 @@ fi
 if [ "$2" == "pull" ]; then
   EXTRACT_RAMDISK=1
 fi
+
 BASE_DIR=$1
 TMP_DIR=$BASE_DIR/tmp
 MAGISK_DIR=$BASE_DIR/magisk
@@ -21,6 +22,25 @@ INITRD=$BASE_DIR/initrd.img
 
 mkdir -p $TMP_DIR
 mkdir -p $MAGISK_DIR
+
+cleanup() {
+  # cleanup
+  echo "[*] Clean up"
+  rm -f config
+  rm -rf $TMP_DIR
+  rm -rf $MAGISK_DIR
+  rm -f busybox
+  rm -f update-binary
+  rm -f process.sh
+  rm -f magisk.zip
+  rm -f initrd.patch
+}
+
+writehex() {
+  printf "\x${1:6:2}\x${1:4:2}\x${1:2:2}\x${1:0:2}"
+}
+
+# ========================================================================== #
 
 # prepare busybox
 echo "[*] Extracting busybox .."
@@ -44,21 +64,22 @@ if [ "$ABILONG" = "arm64-v8a" ]; then ARCH=arm; IS64BIT=true; fi;
 if [ "$ABILONG" = "x86_64" ]; then ARCH=x86; IS64BIT=true; fi;
 
 if [[ -n $EXTRACT_RAMDISK ]]; then
+  echo "[*] Moving out patched boot.img .."
+  mv /sdcard/Download/magisk_patched*.img $TMP_DIR/boot.img
 
-echo "[*] Moving out patched boot.img .."
-mv /sdcard/Download/magisk_patched*.img $TMP_DIR/boot.img
+  if [ -f $TMP_DIR/boot.img ]; then
+    echo "[*] Extracting ramdisk .."
+    rm -f ${RAMDISK}.gz
+    dd if=$TMP_DIR/boot.img of=$RAMDISK bs=2048 skip=1
+    $BUSYBOX gzip $RAMDISK
+    mv ${RAMDISK}.gz $RAMDISK
+  else
+    echo "[!] boot.img not found. "
+  fi
 
-if [ -f $TMP_DIR/boot.img ]; then
-  echo "[*] Extracting ramdisk .."
-  rm -f ${RAMDISK}.gz
-  dd if=$TMP_DIR/boot.img of=$RAMDISK bs=2048 skip=1
-  $BUSYBOX gzip $RAMDISK
-  mv ${RAMDISK}.gz $RAMDISK
-else
-  echo "[!] boot.img not found. "
-fi
-
-else 
+  cleanup
+  exit 0
+fi # EXTRACT_RAMDISK
 
 # fetch latest magisk
 if [[ -n $USES_CANARY ]]; then
@@ -168,90 +189,86 @@ else
   $MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
 fi
 
-writehex() {
-  printf "\x${1:6:2}\x${1:4:2}\x${1:2:2}\x${1:0:2}"
-}
-
 if [[ -n $USES_MANAGER ]]; then
+  echo "[*] Build fake boot.img .."
 
-echo "[*] Build fake boot.img .."
+  BOOT_IMG=/sdcard/boot.img
+  RAMDISK_SIZE="$(printf '%08x' $(stat -c%s $RAMDISK))"
 
-BOOT_IMG=/sdcard/boot.img
-RAMDISK_SIZE="$(printf '%08x' $(stat -c%s $RAMDISK))"
+  rm -f $BOOT_IMG
 
-rm -f $BOOT_IMG
+  # build fake header of boot.img
+  printf "\x41\x4E\x44\x52\x4F\x49\x44\x21\x00\x00\x00\x00\x00\x80\x00\x10" >> $BOOT_IMG
+  writehex $RAMDISK_SIZE >> $BOOT_IMG
+  printf "\x00\x00\x00\x11\x00\x00\x00\x00\x00\x00\xF0\x10\x00\x01\x00\x10\x00\x08\x00\x00" >> $BOOT_IMG
 
-printf "\x41\x4E\x44\x52\x4F\x49\x44\x21\x00\x00\x00\x00\x00\x80\x00\x10" >> $BOOT_IMG
-writehex $RAMDISK_SIZE >> $BOOT_IMG
-printf "\x00\x00\x00\x11\x00\x00\x00\x00\x00\x00\xF0\x10\x00\x01\x00\x10\x00\x08\x00\x00" >> $BOOT_IMG
-i=0
-while [[ $i -lt 251 ]];
-do
-  printf "\x00\x00\x00\x00\x00\x00\x00\x00" >> $BOOT_IMG
-  i=$(($i+1))
-done
+  # padding to 2048 bytes (header)
+  i=0
+  while [[ $i -lt 251 ]];
+  do
+    printf "\x00\x00\x00\x00\x00\x00\x00\x00" >> $BOOT_IMG
+    i=$(($i+1))
+  done
+  
+  # append ramdisk right after header
+  cat $RAMDISK >> $BOOT_IMG
 
-cat $RAMDISK >> $BOOT_IMG
-
-echo "[*] boot.img is ready, launch MagiskManager and patch it."
-
+  echo "[*] boot.img is ready, launch MagiskManager and patch it."
 else
+  # check ramdisk status
+  echo "[*] Checking ramdisk status .."
+  $MAGISK_DIR/magiskboot cpio $RAMDISK test > /dev/null 2>&1
+  STATUS=$?
+  case $((STATUS & 3)) in
+    0 )  # Stock boot
+      echo "[-] Stock boot image detected"
+      cp -af $RAMDISK ${RAMDISK}.orig
+      ;;
+    1 )  # Magisk patched
+      echo "[-] Magisk patched boot image detected"
+      $MAGISK_DIR/magiskboot cpio $RAMDISK restore > /dev/null 2>&1
+      cp -af $RAMDISK ${RAMDISK}.orig
+      ;;
+    2 )  # Unsupported
+      echo "[-] Boot image patched by unsupported programs"
+      abort "! Please use stock ramdisk.img"
+      ;;
+  esac
 
-# check ramdisk status
-echo "[*] Checking ramdisk status .."
-$MAGISK_DIR/magiskboot cpio $RAMDISK test > /dev/null 2>&1
-STATUS=$?
-case $((STATUS & 3)) in
-  0 )  # Stock boot
-    echo "[-] Stock boot image detected"
-    cp -af $RAMDISK ${RAMDISK}.orig
-    ;;
-  1 )  # Magisk patched
-    echo "[-] Magisk patched boot image detected"
-    $MAGISK_DIR/magiskboot cpio $RAMDISK restore > /dev/null 2>&1
-    cp -af $RAMDISK ${RAMDISK}.orig
-    ;;
-  2 )  # Unsupported
-    echo "[-] Boot image patched by unsupported programs"
-    abort "! Please use stock ramdisk.img"
-    ;;
-esac
+  # patch ramdisk
+  echo "[*] Patching ramdisk .."
+  echo " "
+  echo "KEEPVERITY=false" >> config
+  echo "KEEPFORCEENCRYPT=true" >> config
+  if [[ -n $USES_ZIP_IN_APK ]]; then
+    $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk32 $MAGISK_DIR/magisk32.xz
+    $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk64 $MAGISK_DIR/magisk64.xz
+    $IS64BIT && SKIP64="" || SKIP64="#"
+    KEEPVERITY=false KEEPFORCEENCRYPT=true $MAGISK_DIR/magiskboot cpio $RAMDISK \
+      "add 750 init $MAGISK_DIR/magiskinit" \
+      "mkdir 0750 overlay.d" \
+      "mkdir 0750 overlay.d/sbin" \
+      "add 0644 overlay.d/sbin/magisk32.xz $MAGISK_DIR/magisk32.xz" \
+      "$SKIP64 add 0644 overlay.d/sbin/magisk64.xz $MAGISK_DIR/magisk64.xz" \
+      "patch" \
+      "backup $RAMDISK.orig" \
+      "mkdir 000 .backup" \
+      "add 000 .backup/.magisk config"
+  else
+    KEEPVERITY=false KEEPFORCEENCRYPT=true $MAGISK_DIR/magiskboot cpio $RAMDISK \
+      "add 750 init $MAGISK_DIR/magiskinit" \
+      "patch" \
+      "backup ${RAMDISK}.orig" \
+      "mkdir 000 .backup" \
+      "add 000 .backup/.magisk config"
+  fi
 
-# patch ramdisk
-echo "[*] Patching ramdisk .."
-echo " "
-echo "KEEPVERITY=false" >> config
-echo "KEEPFORCEENCRYPT=true" >> config
-if [[ -n $USES_ZIP_IN_APK ]]; then
-  $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk32 $MAGISK_DIR/magisk32.xz
-  $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk64 $MAGISK_DIR/magisk64.xz
-  $IS64BIT && SKIP64="" || SKIP64="#"
-  KEEPVERITY=false KEEPFORCEENCRYPT=true $MAGISK_DIR/magiskboot cpio $RAMDISK \
-    "add 750 init $MAGISK_DIR/magiskinit" \
-    "mkdir 0750 overlay.d" \
-    "mkdir 0750 overlay.d/sbin" \
-    "add 0644 overlay.d/sbin/magisk32.xz $MAGISK_DIR/magisk32.xz" \
-    "$SKIP64 add 0644 overlay.d/sbin/magisk64.xz $MAGISK_DIR/magisk64.xz" \
-    "patch" \
-    "backup $RAMDISK.orig" \
-    "mkdir 000 .backup" \
-    "add 000 .backup/.magisk config"
-else
-  KEEPVERITY=false KEEPFORCEENCRYPT=true $MAGISK_DIR/magiskboot cpio $RAMDISK \
-    "add 750 init $MAGISK_DIR/magiskinit" \
-    "patch" \
-    "backup ${RAMDISK}.orig" \
-    "mkdir 000 .backup" \
-    "add 000 .backup/.magisk config"
-fi
+  # should be temporary hack
+  #if [[ $API -ge 30 ]]; then
+  #  $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 755 apex"
+  #fi
 
-# should be temporary hack
-#if [[ $API -ge 30 ]]; then
-#  $MAGISK_DIR/magiskboot cpio $RAMDISK "mkdir 755 apex"
-#fi
-
-echo "[*] Done patching, compressing ramdisk .."
-
+  echo "[*] Done patching, compressing ramdisk .."
 fi # USES_MANAGER
 
 $BUSYBOX gzip $RAMDISK
@@ -263,16 +280,14 @@ pm install -r $MAGISK_DIR/magisk.apk > /dev/null
 rm -f $MAGISK_DIR/magisk.apk
 
 if [[ ! -n USES_MANAGER ]]; then
-
-# move files
-echo "[*] Installing su binaries .."
-INSTALL_PATH=/data/user_de/0/com.topjohnwu.magisk/install/
-if [[ $API -lt 24 ]]; then
-  INSTALL_PATH=/data/data/com.topjohnwu.magisk/install/
-fi
-run-as com.topjohnwu.magisk mkdir $INSTALL_PATH > /dev/null 2>&1
-run-as com.topjohnwu.magisk cp -r $MAGISK_DIR/* $INSTALL_PATH
-
+  # move files
+  echo "[*] Installing su binaries .."
+  INSTALL_PATH=/data/user_de/0/com.topjohnwu.magisk/install/
+  if [[ $API -lt 24 ]]; then
+    INSTALL_PATH=/data/data/com.topjohnwu.magisk/install/
+  fi
+  run-as com.topjohnwu.magisk mkdir $INSTALL_PATH > /dev/null 2>&1
+  run-as com.topjohnwu.magisk cp -r $MAGISK_DIR/* $INSTALL_PATH
 fi # USES_MANAGER
 
 # patch initrd
@@ -284,16 +299,4 @@ if [ -f ${INITRD}.gz ]; then
   cd ..; rm -rf i
 fi
 
-fi # EXTRACT_RAMDISK
-
-# cleanup
-echo "[*] Clean up"
-rm -f config
-rm -rf $TMP_DIR
-rm -rf $MAGISK_DIR
-rm -f busybox
-rm -f update-binary
-rm -f process.sh
-rm -f magisk.zip
-rm -f initrd.patch
-
+cleanup
