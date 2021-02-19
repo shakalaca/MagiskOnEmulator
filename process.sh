@@ -279,7 +279,7 @@ echo "[*] Installing MagiskManager .."
 pm install -r $MAGISK_DIR/magisk.apk > /dev/null
 rm -f $MAGISK_DIR/magisk.apk
 
-if [[ ! -n USES_MANAGER ]]; then
+if [[ ! -n $USES_MANAGER ]]; then
   # move files
   echo "[*] Installing su binaries .."
   INSTALL_PATH=/data/user_de/0/com.topjohnwu.magisk/install/
