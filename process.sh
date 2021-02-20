@@ -133,11 +133,16 @@ fi
 
 # extract and check ramdisk
 $BUSYBOX gzip -fd ${RAMDISK}.gz
+if [[ $? -ne 0 ]]; then
+  echo "[-] Failed to unzip ramdisk, just use it .."
+  mv ${RAMDISK}.gz ${RAMDISK}
+  TRY_LZ4=1
+fi
 
 if [[ $API -ge 30 ]]; then
   echo "[-] API level greater then 30"
   echo "[*] Check if we need to repack ramdisk before patching .."
-  COUNT=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep 00TRAILER\!\!\! | $BUSYBOX wc -l`  
+  COUNT=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep TRAILER\!\!\! | $BUSYBOX wc -l`  
   if [ $COUNT -gt 1 ]; then
     echo "[-] Multiple cpio archives detected"
     REPACK_RAMDISK=1
@@ -151,7 +156,7 @@ if [[ -n $REPACK_RAMDISK ]]; then
   IBS=1
   OBS=4096
 
-  RAMDISKS=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep 00TRAILER\!\!\!`
+  RAMDISKS=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep TRAILER\!\!\!`
   for OFFSET in $RAMDISKS
   do
     # calculate offset to next archive
@@ -165,7 +170,8 @@ if [[ -n $REPACK_RAMDISK ]]; then
       HEAD=(`$BUSYBOX strings -t d $TMP_DIR/temp.img | $BUSYBOX head -1`)
       
       # wola
-      LAST_INDEX=$((START+HEAD[0]))
+      [[ -n $TRY_LZ4 ]] && MAGIC=9 || MAGIC=$((HEAD[0]))
+      LAST_INDEX=$((START+MAGIC))
       continue
     fi
 
@@ -176,6 +182,12 @@ if [[ -n $REPACK_RAMDISK ]]; then
     echo "[-] Dumping from $LAST_INDEX to $BLOCKS .."
     dd if=$RAMDISK skip=$LAST_INDEX count=$BLOCKS ibs=$IBS obs=$OBS of=$TMP_DIR/temp.img > /dev/null 2>&1
     cd $TMP_DIR/ramdisk > /dev/null
+      if [[ -n $TRY_LZ4 ]]; then
+        $MAGISK_DIR/magiskboot decompress $TMP_DIR/temp.img $TMP_DIR/temp_decompress.img
+        if [[ $? -eq 0 ]]; then
+          mv $TMP_DIR/temp_decompress.img $TMP_DIR/temp.img
+        fi
+      fi
       cat $TMP_DIR/temp.img | $BASE_DIR/busybox cpio -i > /dev/null 2>&1
     cd - > /dev/null
     LAST_INDEX=$OFFSET
