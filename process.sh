@@ -99,6 +99,38 @@ if [[ -n $USES_CANARY ]]; then
   done  
 fi
   
+# extract files
+echo "[*] Unzipping Magisk .."
+$BUSYBOX unzip magisk.zip -od $TMP_DIR > /dev/null
+
+COMMON=/common
+if [[ -f $TMP_DIR/classes.dex ]]; then
+  echo "[*] New Magisk packaging format detected .."
+  [ "$ARCH" = "arm" ] && ARCH=armeabi-v7a
+  USES_ZIP_IN_APK=1
+  BINDIR=/lib
+  COMMON=/assets
+  cd ${TMP_DIR}${BINDIR}/$ARCH
+  for libfile in lib*.so; do
+    file="${libfile#lib}"; file="${file%.so}"
+    mv "$libfile" "$file"
+  done
+  cd - > /dev/null
+fi
+
+mv ${TMP_DIR}${BINDIR}/$ARCH/* $MAGISK_DIR
+mv ${TMP_DIR}${COMMON}/* $MAGISK_DIR
+[ -d $TMP_DIR/chromeos ] && mv $TMP_DIR/chromeos $MAGISK_DIR
+[ -f $MAGISK_DIR/busybox ] && cp $MAGISK_DIR/busybox $BUSYBOX || cp $BUSYBOX $MAGISK_DIR
+
+chmod 755 $MAGISK_DIR/*
+if [[ -n $USES_ZIP_IN_APK ]]; then
+  mv magisk.zip $MAGISK_DIR/magisk.apk
+else
+  $IS64BIT && mv -f $MAGISK_DIR/magiskinit64 $MAGISK_DIR/magiskinit || rm -f $MAGISK_DIR/magiskinit64
+  $MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
+fi
+
 # extract and check ramdisk
 $BUSYBOX gzip -fd ${RAMDISK}.gz
 
@@ -155,38 +187,6 @@ if [[ -n $REPACK_RAMDISK ]]; then
   cd - > /dev/null
 
   rm $TMP_DIR/temp.img
-fi
-
-# extract files
-echo "[*] Unzipping Magisk .."
-$BUSYBOX unzip magisk.zip -od $TMP_DIR > /dev/null
-
-COMMON=/common
-if [[ -f $TMP_DIR/classes.dex ]]; then
-  echo "[*] New Magisk packaging format detected .."
-  [ "$ARCH" = "arm" ] && ARCH=armeabi-v7a
-  USES_ZIP_IN_APK=1
-  BINDIR=/lib
-  COMMON=/assets
-  cd ${TMP_DIR}${BINDIR}/$ARCH
-  for libfile in lib*.so; do
-    file="${libfile#lib}"; file="${file%.so}"
-    mv "$libfile" "$file"
-  done
-  cd - > /dev/null
-fi
-
-mv ${TMP_DIR}${BINDIR}/$ARCH/* $MAGISK_DIR
-mv ${TMP_DIR}${COMMON}/* $MAGISK_DIR
-[ -d $TMP_DIR/chromeos ] && mv $TMP_DIR/chromeos $MAGISK_DIR
-[ ! -f $MAGISK_DIR/busybox ] && cp $BUSYBOX $MAGISK_DIR
-
-chmod 755 $MAGISK_DIR/*
-if [[ -n $USES_ZIP_IN_APK ]]; then
-  mv magisk.zip $MAGISK_DIR/magisk.apk
-else
-  $IS64BIT && mv -f $MAGISK_DIR/magiskinit64 $MAGISK_DIR/magiskinit || rm -f $MAGISK_DIR/magiskinit64
-  $MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
 fi
 
 if [[ -n $USES_MANAGER ]]; then
