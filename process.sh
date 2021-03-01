@@ -50,7 +50,7 @@ fi
 
 # prepare busybox
 cd $BASE_DIR
-chmod +x $BUSYBOX
+chmod 755 $BUSYBOX
 
 # platform check
 echo "[*] Checking Android version"
