@@ -3,6 +3,7 @@ Install Magisk On Official Android Emulator
 
 Works on Android API 22 - 30,S (except 28)
 
+0. Grab Magisk.zip and put in this directory. If you're using ARM system image, replace `busybox` with `busybox_arm`.
 1. For patching the ramdisk with magisk, your AVD must be already created
 2. Make sure you backup the untouched `ramdisk.img` from `<sdk_home>/system-images/<platform>/*/ramdisk.img`. You will need it everytime you want to patch ramdisk with magisk (for the first time and also for subsequent magisk updates).
 3. Clone this repository and copy the original `ramdisk.img` into the clone's folder.
@@ -32,3 +33,7 @@ Only test on Android 8.1
 5. Restart machine and enjoy Magisk :)
 
 Reference: https://github.com/topjohnwu/Magisk/issues/2551#issuecomment-608998420
+
+Sources
+=======
+busybox binary : Extract from https://raw.githubusercontent.com/topjohnwu/magisk_files/c34d91edab45e140753e1256f2b694eed90d2dcc/app-debug.apk

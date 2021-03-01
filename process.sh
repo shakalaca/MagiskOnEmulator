@@ -19,6 +19,7 @@ TMP_DIR=$BASE_DIR/tmp
 MAGISK_DIR=$BASE_DIR/magisk
 RAMDISK=$BASE_DIR/ramdisk.img
 INITRD=$BASE_DIR/initrd.img
+BUSYBOX=$BASE_DIR/busybox
 
 mkdir -p $TMP_DIR
 mkdir -p $MAGISK_DIR
@@ -30,7 +31,6 @@ cleanup() {
   rm -rf $TMP_DIR
   rm -rf $MAGISK_DIR
   rm -f busybox
-  rm -f update-binary
   rm -f process.sh
   rm -f magisk.zip
   rm -f initrd.patch
@@ -42,12 +42,15 @@ writehex() {
 
 # ========================================================================== #
 
-# prepare busybox
-echo "[*] Extracting busybox .."
-cd $BASE_DIR
-sh update-binary -x > /dev/null 2>&1
+# check magisk.zip
+if [ ! -f $BASE_DIR/magisk.zip ]; then
+  echo "\n\n***** Grab magisk.zip first ! *****\n\n"
+  exit
+fi
 
-BUSYBOX=$BASE_DIR/busybox
+# prepare busybox
+cd $BASE_DIR
+chmod +x $BUSYBOX
 
 # platform check
 echo "[*] Checking Android version"
