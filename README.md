@@ -1,7 +1,7 @@
 Install Magisk On Official Android Emulator
 ===========================================
 
-Works on Android API 22 - 30 (except 28)
+Works on Android API 22 - 30,S (except 28)
 
 1. For patching the ramdisk with magisk, your AVD must be already created
 2. Make sure you backup the untouched `ramdisk.img` from `<sdk_home>/system-images/<platform>/*/ramdisk.img`. You will need it everytime you want to patch ramdisk with magisk (for the first time and also for subsequent magisk updates).
