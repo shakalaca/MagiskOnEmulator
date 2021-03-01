@@ -303,6 +303,7 @@ if [[ ! -n $USES_MANAGER ]]; then
   fi
   run-as com.topjohnwu.magisk mkdir $INSTALL_PATH > /dev/null 2>&1
   run-as com.topjohnwu.magisk cp -r $MAGISK_DIR/* $INSTALL_PATH
+  run-as com.topjohnwu.magisk ls -l $INSTALL_PATH
 fi # USES_MANAGER
 
 # patch initrd
