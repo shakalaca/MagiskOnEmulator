@@ -294,6 +294,26 @@ echo "[*] Installing MagiskManager .."
 pm install -r $MAGISK_DIR/magisk.apk > /dev/null
 rm -f $MAGISK_DIR/magisk.apk
 
+# check if emulator has root
+SU_CHK=$(id)
+if [[ $SU_CHK == "uid=0"* ]]; then
+  HAS_ROOT=1
+  SU="eval"
+else
+  SU='/system/xbin/su -c'
+  SU_CHK=`/system/xbin/su -c id`
+  if [[ $SU_CHK == "uid=0"* ]]; then
+    HAS_ROOT=1
+  else
+    SU='/system/xbin/su 0 sh -c'
+    SU_CHK=`/system/xbin/su 0 id`
+    if [[ $SU_CHK == "uid=0"* ]]; then
+      echo "[-] Using old style su .. "
+      HAS_ROOT=1
+    fi
+  fi
+fi
+
 if [[ ! -n $USES_MANAGER ]]; then
   # move files
   echo "[*] Installing su binaries .."
@@ -302,8 +322,18 @@ if [[ ! -n $USES_MANAGER ]]; then
     INSTALL_PATH=/data/data/com.topjohnwu.magisk/install/
   fi
   run-as com.topjohnwu.magisk mkdir $INSTALL_PATH > /dev/null 2>&1
-  run-as com.topjohnwu.magisk cp -r $MAGISK_DIR/* $INSTALL_PATH
-  run-as com.topjohnwu.magisk ls -l $INSTALL_PATH
+  if [[ $? -ne 0 ]] && [[ -n $HAS_ROOT ]]; then
+    if [[ -n $HAS_ROOT ]]; then
+      $SU "mkdir $INSTALL_PATH"
+    else
+      echo "[!] You are using release version of Magisk with non-root emulator "
+      echo "[!] You might have problems using Magisk .. "
+    fi
+  else
+    SU='run-as com.topjohnwu.magisk sh -c'
+  fi
+  $SU "cp -r $MAGISK_DIR/* $INSTALL_PATH"
+  $SU "ls -l $INSTALL_PATH"
 fi # USES_MANAGER
 
 # patch initrd
