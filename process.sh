@@ -313,7 +313,6 @@ else
     SU='/system/xbin/su 0 sh -c'
     SU_CHK=`/system/xbin/su 0 id`
     if [[ $SU_CHK == "uid=0"* ]]; then
-      echo "[-] Using old style su .. "
       HAS_ROOT=1
     fi
   fi
