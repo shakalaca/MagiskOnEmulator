@@ -294,6 +294,9 @@ echo "[*] Installing MagiskManager .."
 pm install -r $MAGISK_DIR/magisk.apk > /dev/null
 rm -f $MAGISK_DIR/magisk.apk
 
+# grant permission for modules
+pm grant com.topjohnwu.magisk android.permission.WRITE_EXTERNAL_STORAGE
+
 # check if emulator has root
 SU_CHK=$(id)
 if [[ $SU_CHK == "uid=0"* ]]; then
