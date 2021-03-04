@@ -295,7 +295,9 @@ pm install -r $MAGISK_DIR/magisk.apk > /dev/null
 rm -f $MAGISK_DIR/magisk.apk
 
 # grant permission for modules
-pm grant com.topjohnwu.magisk android.permission.WRITE_EXTERNAL_STORAGE
+if [[ $API -lt 30 ]]; then
+  pm grant com.topjohnwu.magisk android.permission.WRITE_EXTERNAL_STORAGE
+fi
 
 # check if emulator has root
 SU_CHK=$(id)
