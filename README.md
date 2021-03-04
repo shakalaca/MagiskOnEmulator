@@ -37,3 +37,16 @@ Reference: https://github.com/topjohnwu/Magisk/issues/2551#issuecomment-60899842
 Sources
 =======
 busybox binary : Extract from https://raw.githubusercontent.com/topjohnwu/magisk_files/c34d91edab45e140753e1256f2b694eed90d2dcc/app-debug.apk
+
+Notes
+=====
+| Emulator Version | command-line patch | manager patch
+| ---- | ---- | ---- |
+| Android S | Canary (22001) | X |
+| Android 22 - 30 | Canary (22001) | 21.4 (w/ manager 8.0.7) |
+
+MagiskManager 8.0.7: https://github.com/topjohnwu/Magisk/releases/download/manager-v8.0.7/MagiskManager-v8.0.7.apk
+
+Magisk 21.4 channel url: https://bit.ly/304BAei (https://github.com/topjohnwu/magisk_files/blob/b0694fad863d3a15c6a2276b1061a280ece80ed7/stable.json)
+
+Magisk 22001 Canary: https://github.com/topjohnwu/magisk_files/raw/c34d91edab45e140753e1256f2b694eed90d2dcc/app-debug.apk
