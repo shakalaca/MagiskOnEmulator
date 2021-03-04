@@ -121,7 +121,7 @@ if [[ -f $TMP_DIR/classes.dex ]]; then
   cd - > /dev/null
 fi
 
-mv ${TMP_DIR}${BINDIR}/$ARCH/* $MAGISK_DIR
+cp ${TMP_DIR}${BINDIR}/$ARCH/* $MAGISK_DIR
 mv ${TMP_DIR}${COMMON}/* $MAGISK_DIR
 [ -d $TMP_DIR/chromeos ] && mv $TMP_DIR/chromeos $MAGISK_DIR
 [ -f $MAGISK_DIR/busybox ] && cp $MAGISK_DIR/busybox $BUSYBOX || cp $BUSYBOX $MAGISK_DIR
@@ -311,6 +311,38 @@ else
       echo "[-] Using old style su .. "
       HAS_ROOT=1
     fi
+  fi
+fi
+
+# query installed app path
+RET=$(pm path com.topjohnwu.magisk)
+
+# remove 'package:'
+FILTER_PACKAGE=${RET##*:}
+
+# remove '/base.apk'
+APP_PATH=${FILTER_PACKAGE%/*}/lib/x86
+
+if [[ -n $USES_ZIP_IN_APK ]] && [[ $ARCH == "x86" ]] && [[ ! -d $APP_PATH ]] ; then
+  echo "[*] Try to fix missing x86 libraries .. "
+
+  if [[ -n $HAS_ROOT ]]; then
+    echo "[-] Preparing directory .. "
+    $SU "mkdir -p $APP_PATH"
+
+    # copy to lib/x86/lib*.so
+    for p in ${TMP_DIR}${BINDIR}/x86/* ; do
+      BIN=${p##*/}
+      echo "[-] copying" $p
+      $SU "cp ${p} $APP_PATH/lib${BIN}.so"
+    done
+
+    # set owner and permissions
+    $SU "chown -R system:system $APP_PATH"
+    $SU "chmod -R 755 $APP_PATH"
+    $SU "rm -rf ${APP_PATH%/*}/arm"
+  else
+    echo "[-] We need root to do this .. :( "
   fi
 fi
 
