@@ -345,6 +345,10 @@ if [[ -n $USES_ZIP_IN_APK ]] && [[ $ARCH == "x86" ]] && [[ ! -d $APP_PATH ]] ; t
     $SU "chown -R system:system $APP_PATH"
     $SU "chmod -R 755 $APP_PATH"
     $SU "rm -rf ${APP_PATH%/*}/arm"
+    if [[ -d ${APP_PATH%/*}/x86_64 ]]; then
+      $SU "rm -rf ${APP_PATH%/*}/x86_64"
+      $SU "mv $APP_PATH ${APP_PATH%/*}/x86_64"
+    fi
   else
     echo "[-] We need root to do this .. :( "
   fi
