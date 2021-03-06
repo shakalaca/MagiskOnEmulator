@@ -42,7 +42,7 @@ Notes
 =====
 | Emulator Version | command-line patch | manager patch
 | ---- | ---- | ---- |
-| Android S | Canary (22001) | X |
+| Android S | Canary (22001) | Canary (22001, w/ built-in `su`) |
 | Android 22 - 30 | Canary (22001) | 21.4 (w/ manager 8.0.7) |
 
 MagiskManager 8.0.7: https://github.com/topjohnwu/Magisk/releases/download/manager-v8.0.7/MagiskManager-v8.0.7.apk
