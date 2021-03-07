@@ -36,7 +36,7 @@ Reference: https://github.com/topjohnwu/Magisk/issues/2551#issuecomment-60899842
 
 Sources
 =======
-busybox binary : Extract from https://raw.githubusercontent.com/topjohnwu/magisk_files/c34d91edab45e140753e1256f2b694eed90d2dcc/app-debug.apk
+busybox binary : https://github.com/Magisk-Modules-Repo/busybox-ndk
 
 Notes
 =====
