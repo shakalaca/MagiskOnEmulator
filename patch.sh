@@ -1,7 +1,7 @@
 #!/bin/sh
 
 adb wait-for-device
-adb -e push ramdisk.img /data/local/tmp/ramdisk.img.gz
+adb -e push ramdisk.img.original /data/local/tmp/ramdisk.img.gz
 adb -e push magisk.zip /data/local/tmp/magisk.zip
 adb -e push busybox-arm64-selinux /data/local/tmp/busybox
 adb -e push process.sh /data/local/tmp/
