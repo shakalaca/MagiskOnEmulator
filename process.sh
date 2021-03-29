@@ -73,50 +73,23 @@ fi # EXTRACT_RAMDISK
 if [[ -n $USES_CANARY ]]; then
   echo "[*] Fetching canary version of Magisk .."
   rm -f magisk.zip
-  while [[ $STATUS != 0 ]]
-  do
-    $BUSYBOX wget -c https://raw.githubusercontent.com/topjohnwu/magisk-files/canary/app-debug.apk -O magisk.zip
-    STATUS=$?
-    if [[ $STATUS == 1 && -f magisk.zip ]] ; then
-      F_SIZE=$(stat -c %s magisk.zip)
-      BLOCK=$((F_SIZE/4096-2))
-      echo "[*] Failed to get full magisk.zip, retry .. (" $BLOCK ")"
-      dd if=magisk.zip of=magisk.zip.new bs=4096 count=$BLOCK > /dev/null 2>&1
-      mv -f magisk.zip.new magisk.zip
-    fi
-  done  
+  $BUSYBOX wget -c https://raw.githubusercontent.com/topjohnwu/magisk-files/canary/app-debug.apk -O magisk.apk
 fi
-  
+
 # extract files
-echo "[*] Unzipping Magisk .."
-$BUSYBOX unzip magisk.zip -od $TMP_DIR > /dev/null
+echo "[*] Prepare Magisk Binary: busybox, magisk, magiskboot, magiskinit"
 
-COMMON=/common
-if [[ -f $TMP_DIR/classes.dex ]]; then
-  echo "[*] New Magisk packaging format detected .."
-  [ "$ARCH" = "arm" ] && ARCH=armeabi-v7a
-  USES_ZIP_IN_APK=1
-  BINDIR=/lib
-  COMMON=/assets
-  cd ${TMP_DIR}${BINDIR}/$ARCH
-  for libfile in lib*.so; do
-    file="${libfile#lib}"; file="${file%.so}"
-    mv "$libfile" "$file"
-  done
-  cd - > /dev/null
-fi
+cp ${BASE_DIR}/busybox $MAGISK_DIR
+mv ${BASE_DIR}/magisk-bin $MAGISK_DIR/magisk
+mv ${BASE_DIR}/magiskboot $MAGISK_DIR
+mv ${BASE_DIR}/magiskinit $MAGISK_DIR
 
-cp ${TMP_DIR}${BINDIR}/$ARCH/* $MAGISK_DIR
-mv ${TMP_DIR}${COMMON}/* $MAGISK_DIR
-[ -d $TMP_DIR/chromeos ] && mv $TMP_DIR/chromeos $MAGISK_DIR
+echo "Post moving"
 
 chmod 755 $MAGISK_DIR/*
-if [[ -n $USES_ZIP_IN_APK ]]; then
-  mv magisk.zip $MAGISK_DIR/magisk.apk
-else
-  $IS64BIT && mv -f $MAGISK_DIR/magiskinit64 $MAGISK_DIR/magiskinit || rm -f $MAGISK_DIR/magiskinit64
-  $MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
-fi
+echo "Pre magiskinit-ing"
+$MAGISK_DIR/magiskinit -x magisk $MAGISK_DIR/magisk
+echo "Post magiskinit-ing"
 
 # extract and check ramdisk
 $BUSYBOX gzip -fd ${RAMDISK}.gz
