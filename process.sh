@@ -121,17 +121,9 @@ if [[ -f $TMP_DIR/classes.dex ]]; then
   cd - > /dev/null
 fi
 
-# Use x86_64 busybox instead of built-in one.
-# If you don't wanna take it, comment out those lines
-if [[ $ARCH == "x86" ]] && [[ $IS64BIT == true ]]; then
-  rm -f ${TMP_DIR}${BINDIR}/$ARCH/busybox
-  $BUSYBOX wget -c https://raw.githubusercontent.com/Magisk-Modules-Repo/busybox-ndk/master/busybox-x86_64-selinux -O ${TMP_DIR}${BINDIR}/$ARCH/busybox
-fi
-# END
 cp ${TMP_DIR}${BINDIR}/$ARCH/* $MAGISK_DIR
 mv ${TMP_DIR}${COMMON}/* $MAGISK_DIR
 [ -d $TMP_DIR/chromeos ] && mv $TMP_DIR/chromeos $MAGISK_DIR
-[ -f $MAGISK_DIR/busybox ] && cp $MAGISK_DIR/busybox $BUSYBOX || cp $BUSYBOX $MAGISK_DIR
 
 chmod 755 $MAGISK_DIR/*
 if [[ -n $USES_ZIP_IN_APK ]]; then
