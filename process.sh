@@ -80,9 +80,9 @@ fi
 echo "[*] Prepare Magisk Binary: busybox, magisk, magiskboot, magiskinit"
 
 cp ${BASE_DIR}/busybox $MAGISK_DIR
-mv ${BASE_DIR}/magisk-bin $MAGISK_DIR/magisk
-mv ${BASE_DIR}/magiskboot $MAGISK_DIR
-mv ${BASE_DIR}/magiskinit $MAGISK_DIR
+cp ${BASE_DIR}/magisk-bin $MAGISK_DIR/magisk
+cp ${BASE_DIR}/magiskboot $MAGISK_DIR
+cp ${BASE_DIR}/magiskinit $MAGISK_DIR
 
 echo "Post moving"
 
@@ -231,24 +231,8 @@ if [[ $API -lt 30 ]]; then
   pm grant com.topjohnwu.magisk android.permission.WRITE_EXTERNAL_STORAGE
 fi
 
-# check if emulator has root
-SU_CHK=$(id)
-if [[ $SU_CHK == "uid=0"* ]]; then
-  HAS_ROOT=1
-  SU="eval"
-else
-  SU='/system/xbin/su -c'
-  SU_CHK=`/system/xbin/su -c id`
-  if [[ $SU_CHK == "uid=0"* ]]; then
-    HAS_ROOT=1
-  else
-    SU='/system/xbin/su 0 sh -c'
-    SU_CHK=`/system/xbin/su 0 id`
-    if [[ $SU_CHK == "uid=0"* ]]; then
-      HAS_ROOT=1
-    fi
-  fi
-fi
+SU='/system/xbin/su root'
+HAS_ROOT=1
 
 # query installed app path
 RET=$(pm path com.topjohnwu.magisk)
@@ -257,33 +241,21 @@ RET=$(pm path com.topjohnwu.magisk)
 FILTER_PACKAGE=${RET##*:}
 
 # remove '/base.apk'
-APP_PATH=${FILTER_PACKAGE%/*}/lib/x86
+APP_PATH=${FILTER_PACKAGE%/*}/lib/arm64
 
-if [[ -n $USES_ZIP_IN_APK ]] && [[ $ARCH == "x86" ]] && [[ ! -d $APP_PATH ]] ; then
-  echo "[*] Try to fix missing x86 libraries .. "
+if [[ -n $HAS_ROOT ]]; then
+  echo "[-] Preparing directory .. "
+  su root mkdir -p $APP_PATH
 
-  if [[ -n $HAS_ROOT ]]; then
-    echo "[-] Preparing directory .. "
-    $SU "mkdir -p $APP_PATH"
+  # copy to lib/arm64/lib*.so
+  su root cp ${BASE_DIR}/busybox $APP_PATH/libbusybox.so
+  su root cp ${BASE_DIR}/magisk-bin $APP_PATH/libmagisk.so
+  su root cp ${BASE_DIR}/magiskinit $APP_PATH/libmagiskinit.so
+  su root cp ${BASE_DIR}/magiskboot $APP_PATH/libmagiskboot.so
 
-    # copy to lib/x86/lib*.so
-    for p in ${TMP_DIR}${BINDIR}/x86/* ; do
-      BIN=${p##*/}
-      echo "[-] copying" $p
-      $SU "cp ${p} $APP_PATH/lib${BIN}.so"
-    done
-
-    # set owner and permissions
-    $SU "chown -R system:system $APP_PATH"
-    $SU "chmod -R 755 $APP_PATH"
-    $SU "rm -rf ${APP_PATH%/*}/arm"
-    if [[ -d ${APP_PATH%/*}/x86_64 ]]; then
-      $SU "rm -rf ${APP_PATH%/*}/x86_64"
-      $SU "mv $APP_PATH ${APP_PATH%/*}/x86_64"
-    fi
-  else
-    echo "[-] We need root to do this .. :( "
-  fi
+  # set owner and permissions
+  su root chown -R system:system $APP_PATH
+  su root chmod -R 755 $APP_PATH
 fi
 
 if [[ ! -n $USES_MANAGER ]]; then
