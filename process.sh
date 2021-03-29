@@ -3,13 +3,6 @@
 if [ "$2" == "canary" ]; then
   USES_CANARY=1
 fi
-if [ "$2" == "manager" ]; then
-  USES_MANAGER=1
-fi
-if [ "$2" == "canary_manager" ]; then
-  USES_CANARY=1
-  USES_MANAGER=1
-fi
 if [ "$2" == "pull" ]; then
   EXTRACT_RAMDISK=1
 fi
@@ -201,32 +194,7 @@ if [[ -n $REPACK_RAMDISK ]]; then
   rm $TMP_DIR/temp.img
 fi
 
-if [[ -n $USES_MANAGER ]]; then
-  echo "[*] Build fake boot.img .."
-
-  BOOT_IMG=/sdcard/boot.img
-  RAMDISK_SIZE="$(printf '%08x' $(stat -c%s $RAMDISK))"
-
-  rm -f $BOOT_IMG
-
-  # build fake header of boot.img
-  printf "\x41\x4E\x44\x52\x4F\x49\x44\x21\x00\x00\x00\x00\x00\x80\x00\x10" >> $BOOT_IMG
-  writehex $RAMDISK_SIZE >> $BOOT_IMG
-  printf "\x00\x00\x00\x11\x00\x00\x00\x00\x00\x00\xF0\x10\x00\x01\x00\x10\x00\x08\x00\x00" >> $BOOT_IMG
-
-  # padding to 2048 bytes (header)
-  i=0
-  while [[ $i -lt 251 ]];
-  do
-    printf "\x00\x00\x00\x00\x00\x00\x00\x00" >> $BOOT_IMG
-    i=$(($i+1))
-  done
-  
-  # append ramdisk right after header
-  cat $RAMDISK >> $BOOT_IMG
-
-  echo "[*] boot.img is ready, launch MagiskManager and patch it."
-else
+if [[ ! -n $USES_MANAGER ]]; then
   # check ramdisk status
   echo "[*] Checking ramdisk status .."
   $MAGISK_DIR/magiskboot cpio $RAMDISK test > /dev/null 2>&1
