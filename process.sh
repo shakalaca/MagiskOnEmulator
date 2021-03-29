@@ -223,8 +223,8 @@ mv ${RAMDISK}.gz $RAMDISK
 
 # install apk
 echo "[*] Installing MagiskManager .."
-pm install -r $MAGISK_DIR/magisk.apk > /dev/null
-rm -f $MAGISK_DIR/magisk.apk
+pm install -r $BASE_DIR/magisk.apk > /dev/null
+rm -f $BASE_DIR/magisk.apk
 
 # grant permission for modules
 if [[ $API -lt 30 ]]; then
