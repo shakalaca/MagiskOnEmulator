@@ -123,9 +123,13 @@ fi
 
 # Use x86_64 busybox instead of built-in one.
 # If you don't wanna take it, comment out those lines
-if [[ $ARCH == "x86" ]] && [[ $IS64BIT == true ]]; then
+if [[ $IS64BIT == true ]]; then
   rm -f ${TMP_DIR}${BINDIR}/$ARCH/busybox
-  $BUSYBOX wget -c https://raw.githubusercontent.com/Magisk-Modules-Repo/busybox-ndk/master/busybox-x86_64-selinux -O ${TMP_DIR}${BINDIR}/$ARCH/busybox
+  if [[ $ARCH == "x86" ]]; then
+    $BUSYBOX wget -c https://raw.githubusercontent.com/Magisk-Modules-Repo/busybox-ndk/master/busybox-x86_64-selinux -O ${TMP_DIR}${BINDIR}/$ARCH/busybox
+  else
+    $BUSYBOX wget -c https://raw.githubusercontent.com/Magisk-Modules-Repo/busybox-ndk/master/busybox-arm64-selinux -O ${TMP_DIR}${BINDIR}/$ARCH/busybox
+  fi
 fi
 # END
 cp ${TMP_DIR}${BINDIR}/$ARCH/* $MAGISK_DIR
