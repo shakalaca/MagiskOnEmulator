@@ -33,12 +33,6 @@ writehex() {
 
 # ========================================================================== #
 
-# check magisk.zip
-if [ ! -f $BASE_DIR/magisk.zip ]; then
-  echo "\n\n***** Grab magisk.zip first ! *****\n\n"
-  exit
-fi
-
 # prepare busybox
 cd $BASE_DIR
 chmod 755 $BUSYBOX
