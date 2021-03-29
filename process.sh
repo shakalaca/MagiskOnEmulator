@@ -18,7 +18,6 @@ BASE_DIR=$1
 TMP_DIR=$BASE_DIR/tmp
 MAGISK_DIR=$BASE_DIR/magisk
 RAMDISK=$BASE_DIR/ramdisk.img
-INITRD=$BASE_DIR/initrd.img
 BUSYBOX=$BASE_DIR/busybox
 
 mkdir -p $TMP_DIR
@@ -33,7 +32,6 @@ cleanup() {
   rm -f busybox
   rm -f process.sh
   rm -f magisk.zip
-  rm -f initrd.patch
 }
 
 writehex() {
@@ -374,14 +372,5 @@ if [[ ! -n $USES_MANAGER ]]; then
   $SU "cp -r $MAGISK_DIR/* $INSTALL_PATH"
   $SU "ls -l $INSTALL_PATH"
 fi # USES_MANAGER
-
-# patch initrd
-if [ -f ${INITRD}.gz ]; then
-  $BUSYBOX gzip -fd ${INITRD}.gz
-  mkdir i; cd i; cat $INITRD | $BUSYBOX cpio -i
-  $BUSYBOX patch -p1 < ../initrd.patch
-  $BUSYBOX find . | $BUSYBOX cpio -H newc -o | $BUSYBOX gzip > $INITRD
-  cd ..; rm -rf i
-fi
 
 cleanup
