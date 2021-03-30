@@ -110,6 +110,10 @@ if [[ -f $TMP_DIR/classes.dex ]]; then
   USES_ZIP_IN_APK=1
   BINDIR=/lib
   COMMON=/assets
+  if $IS64BIT && [[ -f ${TMP_DIR}${BINDIR}/${ABILONG}/libbusybox.so ]]; then
+    echo "[*] 64bit Magisk detected .."
+    ARCH=$ABILONG
+  fi
   cd ${TMP_DIR}${BINDIR}/$ARCH
   for libfile in lib*.so; do
     file="${libfile#lib}"; file="${file%.so}"
