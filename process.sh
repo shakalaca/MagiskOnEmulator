@@ -102,7 +102,7 @@ fi
 if [[ $API -ge 30 ]]; then
   echo "[-] API level greater then 30"
   echo "[*] Check if we need to repack ramdisk before patching .."
-  COUNT=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep TRAILER\!\!\! | $BUSYBOX wc -l`  
+  COUNT=`$BUSYBOX strings -t d $RAMDISK | $BUSYBOX grep TRAILER\!\!\! | $BUSYBOX wc -l`
   if [ $COUNT -gt 1 ]; then
     echo "[-] Multiple cpio archives detected"
     REPACK_RAMDISK=1
