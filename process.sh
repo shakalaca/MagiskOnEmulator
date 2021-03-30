@@ -59,11 +59,9 @@ ABI=`getprop ro.product.cpu.abi | $BUSYBOX cut -c-3`
 ABI2=`getprop ro.product.cpu.abi2 | $BUSYBOX cut -c-3`
 ABILONG=`getprop ro.product.cpu.abi`
 
-ARCH=arm
+ARCH=$ABILONG
 IS64BIT=false
-if [ "$ABI" = "x86" ]; then ARCH=x86; fi;
-if [ "$ABI2" = "x86" ]; then ARCH=x86; fi;
-if [ "$ABILONG" = "arm64-v8a" ]; then ARCH=arm; IS64BIT=true; fi;
+if [ "$ABILONG" = "arm64-v8a" ]; then ARCH=armeabi-v7a; IS64BIT=true; fi;
 if [ "$ABILONG" = "x86_64" ]; then ARCH=x86; IS64BIT=true; fi;
 
 if [[ -n $EXTRACT_RAMDISK ]]; then
@@ -109,7 +107,6 @@ $BUSYBOX unzip magisk.zip -od $TMP_DIR > /dev/null
 COMMON=/common
 if [[ -f $TMP_DIR/classes.dex ]]; then
   echo "[*] New Magisk packaging format detected .."
-  [ "$ARCH" = "arm" ] && ARCH=armeabi-v7a
   USES_ZIP_IN_APK=1
   BINDIR=/lib
   COMMON=/assets
