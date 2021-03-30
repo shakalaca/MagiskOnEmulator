@@ -265,7 +265,9 @@ if [[ ! -n $USES_MANAGER ]]; then
   if [[ $API -lt 24 ]]; then
     INSTALL_PATH=/data/data/com.topjohnwu.magisk/install/
   fi
+  echo "Pre mkdir"
   run-as com.topjohnwu.magisk mkdir $INSTALL_PATH > /dev/null 2>&1
+  echo "Post mkdir"
   if [[ $? -ne 0 ]] && [[ -n $HAS_ROOT ]]; then
     if [[ -n $HAS_ROOT ]]; then
       $SU "mkdir $INSTALL_PATH"
