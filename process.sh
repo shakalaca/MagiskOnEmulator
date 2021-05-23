@@ -34,6 +34,8 @@ cleanup() {
   rm -f process.sh
   rm -f magisk.zip
   rm -f initrd.patch
+  
+  sync; sync
 }
 
 writehex() {
@@ -44,7 +46,7 @@ writehex() {
 
 # check magisk.zip
 if [ ! -f $BASE_DIR/magisk.zip ]; then
-  echo "\n\n***** Grab magisk.zip first ! *****\n\n"
+  echo "\n\n***** Grab magisk.zip or magisk.apk first ! *****\n\n"
   exit
 fi
 
