@@ -270,14 +270,21 @@ else
   echo "KEEPVERITY=false" >> config
   echo "KEEPFORCEENCRYPT=true" >> config
   if [[ -n $USES_ZIP_IN_APK ]]; then
-    $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk32 $MAGISK_DIR/magisk32.xz
-    $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk64 $MAGISK_DIR/magisk64.xz
-    $IS64BIT && SKIP64="" || SKIP64="#"
+    SKIP32="#"
+    SKIP64="#"
+    if [ -f $MAGISK_DIR/magisk32 ]; then
+      $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk32 $MAGISK_DIR/magisk32.xz
+      unset SKIP32
+    fi
+    if [ -f $MAGISK_DIR/magisk64 ]; then
+      $MAGISK_DIR/magiskboot compress=xz $MAGISK_DIR/magisk64 $MAGISK_DIR/magisk64.xz
+      unset SKIP64
+    fi
     KEEPVERITY=false KEEPFORCEENCRYPT=true $MAGISK_DIR/magiskboot cpio $RAMDISK \
       "add 750 init $MAGISK_DIR/magiskinit" \
       "mkdir 0750 overlay.d" \
       "mkdir 0750 overlay.d/sbin" \
-      "add 0644 overlay.d/sbin/magisk32.xz $MAGISK_DIR/magisk32.xz" \
+      "$SKIP32 add 0644 overlay.d/sbin/magisk32.xz $MAGISK_DIR/magisk32.xz" \
       "$SKIP64 add 0644 overlay.d/sbin/magisk64.xz $MAGISK_DIR/magisk64.xz" \
       "patch" \
       "backup $RAMDISK.orig" \
