@@ -327,12 +327,12 @@ if [[ $SU_CHK == "uid=0"* ]]; then
   SU="eval"
 else
   SU='/system/xbin/su -c'
-  SU_CHK=`/system/xbin/su -c id`
+  SU_CHK=`/system/xbin/su -c id 2>/dev/null`
   if [[ $SU_CHK == "uid=0"* ]]; then
     HAS_ROOT=1
   else
     SU='/system/xbin/su 0 sh -c'
-    SU_CHK=`/system/xbin/su 0 id`
+    SU_CHK=`/system/xbin/su 0 id 2>/dev/null`
     if [[ $SU_CHK == "uid=0"* ]]; then
       HAS_ROOT=1
     fi
